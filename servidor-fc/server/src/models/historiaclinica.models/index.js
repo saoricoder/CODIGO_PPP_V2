@@ -11,6 +11,7 @@ const { Paciente, PacienteSchema } = require('./paciente.model');
 const { SignosVitales, SignosVitalesSchema } = require('./signosvitales.model');
 const { Terapias, TerapiasSchema } = require('./terapias.model');
 const { TipoTerapia, TipoTerapiaSchema } = require('./tipo_terapia.model');
+const {Auditoria,AuditoriaSchema}= require("./auditoria.model");
 
 
 
@@ -30,6 +31,7 @@ function setupHistoriaClinicaModels(sequelize) {
    Terapias.init(TerapiasSchema, Terapias.config(sequelize));
    TipoTerapia.init(TipoTerapiaSchema, TipoTerapia.config(sequelize));
    Usuario.init(UsuarioSchema, Usuario.config(sequelize));
+   Auditoria.init(AuditoriaSchema,Auditoria.config(sequelize));
 
 
 

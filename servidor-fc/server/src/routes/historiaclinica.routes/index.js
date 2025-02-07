@@ -43,6 +43,7 @@ const auditoriaRouter = require("./auditoria.routes");
  */
 
 function setupHistoriaClinicaRoutes(router) {
+  router.use("./auditorias",auditoriaRouter);
   /**
    * @swagger
    * /api/fcc/enfermedades:

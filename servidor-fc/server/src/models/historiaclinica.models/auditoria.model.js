@@ -11,11 +11,23 @@ class Auditoria extends Model {
     };
   }
 
-  static associate(models) {
-    Auditoria.belongsTo(models.Usuario, {
-      foreignKey: "id_usuario",
-      as: "usuario",
-    });
+  /* Anterior
+    static associate(models) {
+      Auditoria.belongsTo(models.Usuario, {
+        foreignKey: "id_usuario",
+        as: "usuario",
+      });
+    }
+  }
+  */
+
+  static associate(models){
+    if (Model.Usuario) {
+      Auditoria.belongsTo(models.Usuario,{
+        foreignKey:"id_usuario",
+        as :"usuario",
+      });
+    }
   }
 }
 
