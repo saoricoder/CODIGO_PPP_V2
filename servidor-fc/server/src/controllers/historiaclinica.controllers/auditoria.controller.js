@@ -1,14 +1,56 @@
 const AuditoriaService = require("../../services/historiaclinica.services/auditoria.service");
 const service = new AuditoriaService();
 
-const create = async (req, res) => {};
+const create = async (req, res) => {
+  try {
+    const response = await service.create(req.body);
+    res.json({ success: true, data: response });
+    console.log(req.body);
+  } catch (error) {
+    res.status(500).send({ success: false, message: error.message });
+  }
+  console.log("auditoria creada con exito");
+};
 
-const get = async (req, res) => {};
+const get = async (req, res) => {
+  try {
+    const response = await service.find();
+    res.json(response);
+  } catch (error) {
+    res.status(500).send({ success: false, message: error.message });
+  }
+};
 
-const getById = async (req, res) => {};
+const getById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const response = await service.findOne(id);
+    res.json(response);
+  } catch (error) {
+    res.status(500).send({ success: false, message: error.message });
+  }
+};
 
-const update = async (req, res) => {};
+const update = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const body = req.body;
+    const response = await service.update(id, body);
+    console.log("auditoria actualizada con exito");
+    res.json(response);
+  } catch (error) {
+    res.status(500).send({ success: false, message: error.message });
+  }
+};
 
-const _delete = async (req, res) => {};
+const _delete = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const response = await service.delete(id);
+    res.json(response);
+  } catch (error) {
+    res.status(500).send({ success: false, message: error.message });
+  }
+};
 
 module.exports = { create, get, getById, update, _delete };

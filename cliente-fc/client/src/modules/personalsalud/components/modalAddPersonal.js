@@ -1,38 +1,63 @@
-import React, { useState , useEffect} from 'react';
-import { 
-  Modal, Stepper, Step, StepLabel, Button, 
-  Grid, Box, Typography, Container, useMediaQuery, Alert
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { getEspecialidades, getTipoEspecialidad, createPersonalSalud } from '../../../services/personalsaludServices';
-import { TextInput, PhoneInput, AutocompleteInput, FileInput, DateInput } from '../../../components/Inputs';
-import { tipoIdentificacion, paises } from '../../../components/data/Data';
+import React, { useState, useEffect } from "react";
+import {
+  Modal,
+  Stepper,
+  Step,
+  StepLabel,
+  Button,
+  Grid,
+  Box,
+  Typography,
+  Container,
+  useMediaQuery,
+  Alert,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import {
+  getEspecialidades,
+  getTipoEspecialidad,
+  createPersonalSalud,
+} from "../../../services/personalsaludServices";
+import {
+  TextInput,
+  PhoneInput,
+  AutocompleteInput,
+  FileInput,
+  DateInput,
+} from "../../../components/Inputs";
+import { tipoIdentificacion, paises } from "../../../components/data/Data";
 import dayjs from "dayjs";
+import { createAtencion } from "../../../services/atencion";
+import { createAuditoria } from "../../../services/auditoriaServices";
 
-const steps = ['Información Personal', 'Información de Contacto', 'Información Profesional'];
+const steps = [
+  "Información Personal",
+  "Información de Contacto",
+  "Información Profesional",
+];
 
 const ModalAddPersonalSalud = ({ open, onClose, onPersonalSaludAdded }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [activeStep, setActiveStep] = useState(0);
   const [especialidades, setEspecialidades] = useState([]);
-const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
+  const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
   const [personalSalud, setPersonalSalud] = useState({
-    nombres_personal: '',
-    apellidos_personal: '',
-    nacionalidad_personal: 'Ecuador',
+    nombres_personal: "",
+    apellidos_personal: "",
+    nacionalidad_personal: "Ecuador",
     tipo_dni_personal: null,
-    dni_personal: '',
-    titulos_personal: '',
-    telefono_personal: '',
-    direccion_personal: '',
-    email_personal: '',
+    dni_personal: "",
+    titulos_personal: "",
+    telefono_personal: "",
+    direccion_personal: "",
+    email_personal: "",
     hdv_personal: null,
     foto_personal: null,
     fecha_nacimiento_personal: null,
-    licencia_personal: '',
-    id_especialidad: '',
-    id_tipo_especialidad: ''
+    licencia_personal: "",
+    id_especialidad: "",
+    id_tipo_especialidad: "",
   });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -43,8 +68,8 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setPersonalSalud({ ...personalSalud, [name]: value });
-    if (value.trim() !== '') {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (value.trim() !== "") {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
@@ -53,24 +78,30 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
       try {
         const [especialidadesData, tiposEspecialidadData] = await Promise.all([
           getEspecialidades(),
-          getTipoEspecialidad()
+          getTipoEspecialidad(),
         ]);
         setEspecialidades(especialidadesData);
         setTiposEspecialidad(tiposEspecialidadData);
       } catch (error) {
-        console.error('Error fetching data:', error);
-        setAlertMessage("Error al cargar las especialidades. Por favor, intente nuevamente.");
+        console.error("Error fetching data:", error);
+        setAlertMessage(
+          "Error al cargar las especialidades. Por favor, intente nuevamente."
+        );
         setShowAlert(true);
       }
     };
-  
+
     fetchData();
   }, []);
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
-    if (value.trim() === '' && name !== 'hdv_personal' && name !== 'foto_personal') {
+    if (
+      value.trim() === "" &&
+      name !== "hdv_personal" &&
+      name !== "foto_personal"
+    ) {
       setErrors((prev) => ({ ...prev, [name]: "Este campo es obligatorio" }));
     }
   };
@@ -88,16 +119,16 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
   };
 
   const handleFileChange = (file, fieldName) => {
-    setPersonalSalud(prev => ({
+    setPersonalSalud((prev) => ({
       ...prev,
-      [fieldName]: file
+      [fieldName]: file,
     }));
   };
 
   const handleRemoveFile = (fieldName) => {
-    setPersonalSalud(prev => ({
+    setPersonalSalud((prev) => ({
       ...prev,
-      [fieldName]: null
+      [fieldName]: null,
     }));
   };
 
@@ -115,14 +146,20 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
     for (const key in personalSalud) {
       if (
         (personalSalud[key] === "" || personalSalud[key] === null) &&
-        key !== "hdv_personal" && key !== "foto_personal"
+        key !== "hdv_personal" &&
+        key !== "foto_personal"
       ) {
         tempErrors[key] = "Este campo es obligatorio";
         isValid = false;
       }
     }
     setErrors(tempErrors);
-    setTouched(Object.keys(personalSalud).reduce((acc, key) => ({ ...acc, [key]: true }), {}));
+    setTouched(
+      Object.keys(personalSalud).reduce(
+        (acc, key) => ({ ...acc, [key]: true }),
+        {}
+      )
+    );
     if (!isValid) {
       setAlertMessage("Por favor, complete todos los campos obligatorios.");
       setShowAlert(true);
@@ -148,33 +185,42 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
     setIsSubmitting(true);
     const formData = new FormData();
 
-    Object.keys(personalSalud).forEach(key => {
-      if (key !== 'foto_personal' && key !== 'hdv_personal') {
+    Object.keys(personalSalud).forEach((key) => {
+      if (key !== "foto_personal" && key !== "hdv_personal") {
         formData.append(key, personalSalud[key]);
       }
     });
 
     if (personalSalud.foto_personal) {
-      formData.append('foto_personal', personalSalud.foto_personal);
+      formData.append("foto_personal", personalSalud.foto_personal);
     }
 
     if (personalSalud.hdv_personal) {
-      formData.append('hdv_personal', personalSalud.hdv_personal);
+      formData.append("hdv_personal", personalSalud.hdv_personal);
     }
 
-    formData.append('fecha_registro_personal', dayjs().format('YYYY-MM-DD'));
+    formData.append("fecha_registro_personal", dayjs().format("YYYY-MM-DD"));
 
     try {
       const response = await createPersonalSalud(formData);
+      let data = {};
       if (response && response.success === true) {
         onPersonalSaludAdded(true);
+        data.id_usuario = 254675;
+        data.modulo = "Personal Salud";
+        data.operacion = "CREAR";
+        data.detalle = "POST";
+        createAuditoria(data);
+        console.log(data);
         onClose();
       } else {
-        throw new Error('La respuesta del servidor no indica éxito');
+        throw new Error("La respuesta del servidor no indica éxito");
       }
     } catch (error) {
-      console.error('Error al guardar el personal de salud:', error);
-      setAlertMessage("Error al guardar el personal de salud. Por favor, intente nuevamente.");
+      console.error("Error al guardar el personal de salud:", error);
+      setAlertMessage(
+        "Error al guardar el personal de salud. Por favor, intente nuevamente."
+      );
       setShowAlert(true);
     } finally {
       setIsSubmitting(false);
@@ -205,7 +251,9 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
                 onChange={handleChange}
                 onBlur={handleBlur}
                 error={touched.apellidos_personal && errors.apellidos_personal}
-                helperText={touched.apellidos_personal && errors.apellidos_personal}
+                helperText={
+                  touched.apellidos_personal && errors.apellidos_personal
+                }
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -213,7 +261,11 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
                 label="Nacionalidad"
                 options={paises}
                 value={personalSalud.nacionalidad_personal}
-                onChange={(newValue)=> handleAutocompleteChange("nacionalidad_personal")(null,{value: newValue})}
+                onChange={(newValue) =>
+                  handleAutocompleteChange("nacionalidad_personal")(null, {
+                    value: newValue,
+                  })
+                }
                 onBlur={handleBlur}
                 error={errors.nacionalidad_personal}
                 helperText={errors.nacionalidad_personal}
@@ -224,7 +276,11 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
                 label="Tipo de DNI"
                 options={tipoIdentificacion}
                 value={personalSalud.tipo_dni_personal}
-                onChange={(newValue)=> handleAutocompleteChange("tipo_dni_personal")(null,{value: newValue})}
+                onChange={(newValue) =>
+                  handleAutocompleteChange("tipo_dni_personal")(null, {
+                    value: newValue,
+                  })
+                }
                 onBlur={handleBlur}
                 error={errors.tipo_dni_personal}
                 helperText={errors.tipo_dni_personal}
@@ -263,7 +319,9 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
                 onChange={handleChange}
                 onBlur={handleBlur}
                 error={touched.direccion_personal && errors.direccion_personal}
-                helperText={touched.direccion_personal && errors.direccion_personal}
+                helperText={
+                  touched.direccion_personal && errors.direccion_personal
+                }
               />
             </Grid>
             <Grid item xs={12}>
@@ -274,7 +332,9 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
                 onChange={handleChange}
                 onBlur={handleBlur}
                 error={touched.telefono_personal && errors.telefono_personal}
-                helperText={touched.telefono_personal && errors.telefono_personal}
+                helperText={
+                  touched.telefono_personal && errors.telefono_personal
+                }
               />
             </Grid>
             <Grid item xs={12}>
@@ -293,37 +353,49 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
       case 2:
         return (
           <Grid container spacing={2}>
-                <Grid item xs={12}>
-            <AutocompleteInput
-              label="Tipo de Especialidad"
-              options={tiposEspecialidad.map(tipo => ({
-                value: tipo.id_tipo_especialidad,
-                label: tipo.descripcion_tipo_especialidad
-              }))}
-              value={personalSalud.id_tipo_especialidad}
-              onChange={(newValue)=> handleAutocompleteChange("id_tipo_especialidad")(null,{value: newValue})}
-              onBlur={handleBlur}
-              error={errors.id_tipo_especialidad}
-              helperText={errors.id_tipo_especialidad}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <AutocompleteInput
-              label="Especialidad"
-              options={especialidades
-                .filter(esp => esp.id_tipo_especialidad === personalSalud.id_tipo_especialidad)
-                .map(esp => ({
-                  value: esp.id_especialidad,
-                  label: esp.nombre_especialidad
+            <Grid item xs={12}>
+              <AutocompleteInput
+                label="Tipo de Especialidad"
+                options={tiposEspecialidad.map((tipo) => ({
+                  value: tipo.id_tipo_especialidad,
+                  label: tipo.descripcion_tipo_especialidad,
                 }))}
-              value={personalSalud.id_especialidad}
-              onChange={(newValue)=> handleAutocompleteChange("id_especialidad")(null,{value: newValue})}
-              onBlur={handleBlur}
-              error={errors.id_especialidad}
-              helperText={errors.id_especialidad}
-              disabled={!personalSalud.id_tipo_especialidad}
-            />
-          </Grid>
+                value={personalSalud.id_tipo_especialidad}
+                onChange={(newValue) =>
+                  handleAutocompleteChange("id_tipo_especialidad")(null, {
+                    value: newValue,
+                  })
+                }
+                onBlur={handleBlur}
+                error={errors.id_tipo_especialidad}
+                helperText={errors.id_tipo_especialidad}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <AutocompleteInput
+                label="Especialidad"
+                options={especialidades
+                  .filter(
+                    (esp) =>
+                      esp.id_tipo_especialidad ===
+                      personalSalud.id_tipo_especialidad
+                  )
+                  .map((esp) => ({
+                    value: esp.id_especialidad,
+                    label: esp.nombre_especialidad,
+                  }))}
+                value={personalSalud.id_especialidad}
+                onChange={(newValue) =>
+                  handleAutocompleteChange("id_especialidad")(null, {
+                    value: newValue,
+                  })
+                }
+                onBlur={handleBlur}
+                error={errors.id_especialidad}
+                helperText={errors.id_especialidad}
+                disabled={!personalSalud.id_tipo_especialidad}
+              />
+            </Grid>
             <Grid item xs={12}>
               <TextInput
                 label="Títulos"
@@ -345,23 +417,25 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
                 onChange={handleChange}
                 onBlur={handleBlur}
                 error={touched.licencia_personal && errors.licencia_personal}
-                helperText={touched.licencia_personal && errors.licencia_personal}
+                helperText={
+                  touched.licencia_personal && errors.licencia_personal
+                }
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <FileInput
-                onChange={(file) => handleFileChange(file, 'foto_personal')}
+                onChange={(file) => handleFileChange(file, "foto_personal")}
                 value={personalSalud.foto_personal}
-                onRemove={() => handleRemoveFile('foto_personal')}
+                onRemove={() => handleRemoveFile("foto_personal")}
                 disabled={false}
                 inputName="Subir foto"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <FileInput
-                onChange={(file) => handleFileChange(file, 'hdv_personal')}
+                onChange={(file) => handleFileChange(file, "hdv_personal")}
                 value={personalSalud.hdv_personal}
-                onRemove={() => handleRemoveFile('hdv_personal')}
+                onRemove={() => handleRemoveFile("hdv_personal")}
                 disabled={false}
                 inputName="Subir hoja de vida"
               />
@@ -375,27 +449,38 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
 
   return (
     <Modal open={open} onClose={onClose}>
-      <Container maxWidth="md" sx={{ 
-        bgcolor: "white", 
-        padding: 4, 
-        borderRadius: 2,
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: isMobile ? '90%' : '70%',
-        maxHeight: '90vh',
-        overflowY: 'auto'
-      }}>
+      <Container
+        maxWidth="md"
+        sx={{
+          bgcolor: "white",
+          padding: 4,
+          borderRadius: 2,
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: isMobile ? "90%" : "70%",
+          maxHeight: "90vh",
+          overflowY: "auto",
+        }}
+      >
         <Typography variant="h4" gutterBottom>
           Añadir Personal de Salud
         </Typography>
         {showAlert && (
-          <Alert severity="error" onClose={() => setShowAlert(false)} sx={{ mb: 2 }}>
+          <Alert
+            severity="error"
+            onClose={() => setShowAlert(false)}
+            sx={{ mb: 2 }}
+          >
             {alertMessage}
           </Alert>
         )}
-        <Stepper activeStep={activeStep} sx={{ marginBottom: 2 }} orientation={isMobile ? "vertical" : "horizontal"}>
+        <Stepper
+          activeStep={activeStep}
+          sx={{ marginBottom: 2 }}
+          orientation={isMobile ? "vertical" : "horizontal"}
+        >
           {steps.map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
@@ -404,7 +489,13 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
         </Stepper>
         <Box>
           {renderStepContent(activeStep)}
-          <Box sx={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: 2,
+            }}
+          >
             <Button
               disabled={activeStep === 0}
               onClick={handleBack}
@@ -412,8 +503,17 @@ const [tiposEspecialidad, setTiposEspecialidad] = useState([]);
             >
               Atrás
             </Button>
-            <Button variant="contained" color="primary" onClick={handleNext} disabled={isSubmitting}>
-              {activeStep === steps.length - 1 ? (isSubmitting ? "Guardando..." : "Guardar") : "Siguiente"}
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleNext}
+              disabled={isSubmitting}
+            >
+              {activeStep === steps.length - 1
+                ? isSubmitting
+                  ? "Guardando..."
+                  : "Guardar"
+                : "Siguiente"}
             </Button>
           </Box>
         </Box>

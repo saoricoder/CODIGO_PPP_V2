@@ -11,23 +11,11 @@ class Auditoria extends Model {
     };
   }
 
-  /* Anterior
-    static associate(models) {
-      Auditoria.belongsTo(models.Usuario, {
-        foreignKey: "id_usuario",
-        as: "usuario",
-      });
-    }
-  }
-  */
-
-  static associate(models){
-    if (Model.Usuario) {
-      Auditoria.belongsTo(models.Usuario,{
-        foreignKey:"id_usuario",
-        as :"usuario",
-      });
-    }
+  static associate(models) {
+    Auditoria.belongsTo(models.Usuario, {
+      foreignKey: "id_usuario",
+      as: "usuario",
+    });
   }
 }
 
@@ -50,7 +38,18 @@ const AuditoriaSchema = {
     allowNull: true,
     type: DataTypes.STRING(40),
     validate: {
-      isIn: [["CREAR", "EDITAR", "ELIMINAR", "CONSULTAR"]], // Restricción de valores posibles
+      isIn: [
+        [
+          "CREAR",
+          "EDITAR",
+          "ELIMINAR",
+          "CONSULTAR",
+          "Crear",
+          "Editar",
+          "Eliminar",
+          "Consultar",
+        ],
+      ], // Restricción de valores posibles
     },
   },
   detalle: {

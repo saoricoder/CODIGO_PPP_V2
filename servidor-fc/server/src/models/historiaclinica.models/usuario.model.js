@@ -1,4 +1,4 @@
-const { Model, DataTypes } = require('sequelize');//comilla simple
+const { Model, DataTypes } = require("sequelize");
 
 class Usuario extends Model {
   static config(sequelize) {
@@ -16,11 +16,11 @@ class Usuario extends Model {
       foreignKey: "id_personal_salud",
       as: "personalsalud",
     });
-/*
+
     Usuario.hasMany(models.Auditoria, {
       foreignKey: "id_usuario",
       as: "auditorias",
-    });*/
+    });
   }
 }
 

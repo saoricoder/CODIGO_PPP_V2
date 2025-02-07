@@ -34,6 +34,8 @@ const auditoriaRouter = require("./auditoria.routes");
  *     description: Operaciones relacionadas con pacientes
  *   - name: Signos Vitales
  *     description: Operaciones relacionadas con signos vitales
+ *   - name: Auditoria
+ *     description: Operaciones relacionas con Auditoria
  *   - name: Terapias
  *     description: Operaciones relacionadas con terapias
  *   - name: CIE-11
@@ -43,7 +45,6 @@ const auditoriaRouter = require("./auditoria.routes");
  */
 
 function setupHistoriaClinicaRoutes(router) {
-  router.use("./auditorias",auditoriaRouter);
   /**
    * @swagger
    * /api/fcc/enfermedades:
