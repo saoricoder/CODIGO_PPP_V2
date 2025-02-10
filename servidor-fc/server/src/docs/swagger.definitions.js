@@ -14,6 +14,10 @@ const swaggerDefinitions = {
       description: "Operaciones relacionadas con atenciones médicas",
     },
     {
+      name: "Auditorías",
+      description: "Operaciones relacionadas con el registro de auditorías",
+    },
+    {
       name: "Diagnóstico",
       description: "Operaciones relacionadas con diagnósticos médicos",
     },
@@ -61,6 +65,28 @@ const swaggerDefinitions = {
   ],
   components: {
     schemas: {
+      Auditoria: {
+        type: "object",
+        properties: {
+          id_usuario: {
+            type: "string",
+            description: "ID del registro de auditoría",
+          },
+          modulo: {
+            type: "string",
+            description: "modulo donde se realiza los cambios",
+          },
+          operacion: {
+            type: "string",
+            description:
+              "operacion sql realizada Crear, Eliminar, Modificar....",
+          },
+          detalle: {
+            type: "string",
+            description: "detalle de metodo SQL realizado INSERT INTO",
+          },
+        },
+      },
       Atencion: {
         type: "object",
         properties: {
@@ -75,10 +101,9 @@ const swaggerDefinitions = {
             description: "Fecha de la atención",
           },
           idPersonal: {
-                type: "string",
-                description: "ID del personal de salud que atendió",
-            },
-
+            type: "string",
+            description: "ID del personal de salud que atendió",
+          },
         },
       },
       Diagnostico: {
@@ -324,6 +349,120 @@ const swaggerDefinitions = {
         },
       },
     },
+
+    "/api/fcc/auditoria": {
+      get: {
+        summary: "Obtiene todos los registros de auditoría",
+        tags: ["Auditorías"],
+        responses: {
+          200: {
+            description: "Lista de registros de auditoría",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/Auditoria" },
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        summary: "Registra una nueva auditoría",
+        tags: ["Auditorías"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/Auditoria" },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: "Auditoría registrada exitosamente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Auditoria" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/fcc/auditoria/{id}": {
+      get: {
+        summary: "Obtiene información detallada de una auditoría específica",
+        tags: ["Auditorías"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Detalles de la auditoría",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Auditoria" },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        summary: "Actualiza un registro de auditoria",
+        tags: ["Auditorías"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/Auditoria" },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Auditoría actualizada exitosamente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Auditoria" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        summary: "Elimina una Auditoria",
+        tags: ["Auditorías"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Auditoria eliminada exitosamente",
+          },
+        },
+      },
+    },
+
     "/api/fcc/diagnostico": {
       get: {
         summary: "Obtiene todos los diagnósticos",
@@ -537,1274 +676,1271 @@ const swaggerDefinitions = {
           },
         },
       },
-
     },
     "/api/fcc/historia/{id}": {
-        get: {
-          summary: "Obtiene una historia clínica por ID",
-          tags: ["Historia Clínica"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Historia clínica encontrada",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/HistoriaClinica" },
-                },
-              },
-            },
-          },
-        },
-        put: {
-          summary: "Actualiza una historia clínica",
-          tags: ["Historia Clínica"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          requestBody: {
+      get: {
+        summary: "Obtiene una historia clínica por ID",
+        tags: ["Historia Clínica"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
             required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Historia clínica encontrada",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/HistoriaClinica" },
               },
             },
           },
-          responses: {
-            200: {
-              description: "Historia clínica actualizada exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/HistoriaClinica" },
-                },
+        },
+      },
+      put: {
+        summary: "Actualiza una historia clínica",
+        tags: ["Historia Clínica"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/HistoriaClinica" },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Historia clínica actualizada exitosamente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/HistoriaClinica" },
               },
             },
           },
         },
-        delete: {
-          summary: "Elimina una historia clínica",
-          tags: ["Historia Clínica"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Historia clínica eliminada exitosamente",
-            },
+      },
+      delete: {
+        summary: "Elimina una historia clínica",
+        tags: ["Historia Clínica"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Historia clínica eliminada exitosamente",
           },
         },
+      },
     },
     "/api/fcc/paciente": {
-        get: {
-          summary: "Obtiene todos los pacientes",
-          tags: ["Pacientes"],
-          responses: {
-            200: {
-              description: "Lista de pacientes",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "array",
-                    items: { $ref: "#/components/schemas/Paciente" },
-                  },
+      get: {
+        summary: "Obtiene todos los pacientes",
+        tags: ["Pacientes"],
+        responses: {
+          200: {
+            description: "Lista de pacientes",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/Paciente" },
                 },
               },
             },
           },
         },
-        post: {
-          summary: "Crea un nuevo paciente",
-          tags: ["Pacientes"],
-          requestBody: {
-            required: true,
+      },
+      post: {
+        summary: "Crea un nuevo paciente",
+        tags: ["Pacientes"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/Paciente" },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: "Paciente creado exitosamente",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Paciente" },
               },
             },
           },
-          responses: {
-            201: {
-              description: "Paciente creado exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/Paciente" },
-                },
-              },
-            },
-          },
         },
       },
-      "/api/fcc/paciente/{id}": {
-        get: {
-          summary: "Obtiene un paciente por ID",
-          tags: ["Pacientes"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Paciente encontrado",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/Paciente" },
-                },
-              },
-            },
-          },
-        },
-        put: {
-          summary: "Actualiza un paciente",
-          tags: ["Pacientes"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          requestBody: {
+    },
+    "/api/fcc/paciente/{id}": {
+      get: {
+        summary: "Obtiene un paciente por ID",
+        tags: ["Pacientes"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
             required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Paciente encontrado",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Paciente" },
               },
             },
           },
-          responses: {
-            200: {
-              description: "Paciente actualizado exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/Paciente" },
+        },
+      },
+      put: {
+        summary: "Actualiza un paciente",
+        tags: ["Pacientes"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/Paciente" },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Paciente actualizado exitosamente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Paciente" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        summary: "Elimina un paciente",
+        tags: ["Pacientes"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Paciente eliminado exitosamente",
+          },
+        },
+      },
+    },
+    "/api/fcc/paciente/estado/{id}": {
+      put: {
+        summary: "Cambia el estado de un paciente (eliminación lógica)",
+        tags: ["Pacientes"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Estado del paciente actualizado exitosamente",
+          },
+        },
+      },
+    },
+    "/api/fcc/personalsalud": {
+      get: {
+        summary: "Obtiene todo el personal de salud",
+        tags: ["Personal de Salud"],
+        responses: {
+          200: {
+            description: "Lista de personal de salud",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/PersonalSalud" },
                 },
               },
             },
           },
         },
-        delete: {
-          summary: "Elimina un paciente",
-          tags: ["Pacientes"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Paciente eliminado exitosamente",
-            },
-          },
-        },
       },
-      "/api/fcc/paciente/estado/{id}": {
-        put: {
-          summary: "Cambia el estado de un paciente (eliminación lógica)",
-          tags: ["Pacientes"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Estado del paciente actualizado exitosamente",
-            },
-          },
-        },
-      },
-      "/api/fcc/personalsalud": {
-        get: {
-          summary: "Obtiene todo el personal de salud",
-          tags: ["Personal de Salud"],
-          responses: {
-            200: {
-              description: "Lista de personal de salud",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "array",
-                    items: { $ref: "#/components/schemas/PersonalSalud" },
+      post: {
+        summary: "Crea un nuevo personal de salud",
+        tags: ["Personal de Salud"],
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                properties: {
+                  // Definir propiedades del personal de salud aquí
+                  file: {
+                    type: "string",
+                    format: "binary",
                   },
                 },
               },
             },
           },
         },
-        post: {
-          summary: "Crea un nuevo personal de salud",
-          tags: ["Personal de Salud"],
-          requestBody: {
-            required: true,
+        responses: {
+          201: {
+            description: "Personal de salud creado exitosamente",
             content: {
-              "multipart/form-data": {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/PersonalSalud" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/fcc/personalsalud/{id}": {
+      get: {
+        summary: "Obtiene personal de salud por ID",
+        tags: ["Personal de Salud"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Personal de salud encontrado",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/PersonalSalud" },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        summary: "Actualiza personal de salud",
+        tags: ["Personal de Salud"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                properties: {
+                  // Definir propiedades del personal de salud aquí
+                  file: {
+                    type: "string",
+                    format: "binary",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Personal de salud actualizado exitosamente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/PersonalSalud" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        summary: "Elimina personal de salud",
+        tags: ["Personal de Salud"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Personal de salud eliminado exitosamente",
+          },
+        },
+      },
+    },
+    "/api/fcc/personalsalud/estado/{id}": {
+      put: {
+        summary: "Cambia el estado del personal de salud (eliminación lógica)",
+        tags: ["Personal de Salud"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description:
+              "Estado del personal de salud actualizado exitosamente",
+          },
+        },
+      },
+    },
+    "/api/fcc/personalsalud/{id}/estadisticas": {
+      get: {
+        summary: "Obtiene estadísticas del personal de salud",
+        tags: ["Personal de Salud"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Estadísticas del personal de salud",
+            content: {
+              "application/json": {
                 schema: {
                   type: "object",
-                  properties: {
-                    // Definir propiedades del personal de salud aquí
-                    file: {
-                      type: "string",
-                      format: "binary",
-                    },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            201: {
-              description: "Personal de salud creado exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/PersonalSalud" },
+                  // Definir propiedades de las estadísticas aquí
                 },
               },
             },
           },
         },
       },
-      "/api/fcc/personalsalud/{id}": {
-        get: {
-          summary: "Obtiene personal de salud por ID",
-          tags: ["Personal de Salud"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Personal de salud encontrado",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/PersonalSalud" },
-                },
-              },
-            },
-          },
-        },
-        put: {
-          summary: "Actualiza personal de salud",
-          tags: ["Personal de Salud"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          requestBody: {
-            required: true,
+    },
+    "/api/fcc/signosvitales": {
+      get: {
+        summary: "Obtiene todos los registros de signos vitales",
+        tags: ["Signos Vitales"],
+        responses: {
+          200: {
+            description: "Lista de registros de signos vitales",
             content: {
-              "multipart/form-data": {
+              "application/json": {
                 schema: {
-                  type: "object",
-                  properties: {
-                    // Definir propiedades del personal de salud aquí
-                    file: {
-                      type: "string",
-                      format: "binary",
-                    },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            200: {
-              description: "Personal de salud actualizado exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/PersonalSalud" },
-                },
-              },
-            },
-          },
-        },
-        delete: {
-          summary: "Elimina personal de salud",
-          tags: ["Personal de Salud"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Personal de salud eliminado exitosamente",
-            },
-          },
-        },
-      },
-      "/api/fcc/personalsalud/estado/{id}": {
-        put: {
-          summary:
-            "Cambia el estado del personal de salud (eliminación lógica)",
-          tags: ["Personal de Salud"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description:
-                "Estado del personal de salud actualizado exitosamente",
-            },
-          },
-        },
-      },
-      "/api/fcc/personalsalud/{id}/estadisticas": {
-        get: {
-          summary: "Obtiene estadísticas del personal de salud",
-          tags: ["Personal de Salud"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Estadísticas del personal de salud",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "object",
-                    // Definir propiedades de las estadísticas aquí
-                  },
+                  type: "array",
+                  items: { $ref: "#/components/schemas/SignosVitales" },
                 },
               },
             },
           },
         },
       },
-      "/api/fcc/signosvitales": {
-        get: {
-          summary: "Obtiene todos los registros de signos vitales",
-          tags: ["Signos Vitales"],
-          responses: {
-            200: {
-              description: "Lista de registros de signos vitales",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "array",
-                    items: { $ref: "#/components/schemas/SignosVitales" },
-                  },
-                },
-              },
+      post: {
+        summary: "Crea un nuevo registro de signos vitales",
+        tags: ["Signos Vitales"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/SignosVitales" },
             },
           },
         },
-        post: {
-          summary: "Crea un nuevo registro de signos vitales",
-          tags: ["Signos Vitales"],
-          requestBody: {
-            required: true,
+        responses: {
+          201: {
+            description: "Registro de signos vitales creado exitosamente",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/SignosVitales" },
               },
             },
           },
-          responses: {
-            201: {
-              description: "Registro de signos vitales creado exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/SignosVitales" },
-                },
-              },
-            },
-          },
         },
       },
-      "/api/fcc/signosvitales/{id}": {
-        get: {
-          summary: "Obtiene un registro de signos vitales por ID",
-          tags: ["Signos Vitales"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Registro de signos vitales encontrado",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/SignosVitales" },
-                },
-              },
-            },
-          },
-        },
-        put: {
-          summary: "Actualiza un registro de signos vitales",
-          tags: ["Signos Vitales"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          requestBody: {
+    },
+    "/api/fcc/signosvitales/{id}": {
+      get: {
+        summary: "Obtiene un registro de signos vitales por ID",
+        tags: ["Signos Vitales"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
             required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Registro de signos vitales encontrado",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/SignosVitales" },
               },
             },
           },
-          responses: {
-            200: {
-              description:
-                "Registro de signos vitales actualizado exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/SignosVitales" },
-                },
-              },
-            },
-          },
-        },
-        delete: {
-          summary: "Elimina un registro de signos vitales",
-          tags: ["Signos Vitales"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Registro de signos vitales eliminado exitosamente",
-            },
-          },
         },
       },
-      "/api/fcc/terapias": {
-        get: {
-          summary: "Obtiene todas las terapias",
-          tags: ["Terapias"],
-          responses: {
-            200: {
-              description: "Lista de terapias",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "array",
-                    items: { $ref: "#/components/schemas/Terapia" },
-                  },
-                },
-              },
+      put: {
+        summary: "Actualiza un registro de signos vitales",
+        tags: ["Signos Vitales"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/SignosVitales" },
             },
           },
         },
-        post: {
-          summary: "Crea una nueva terapia",
-          tags: ["Terapias"],
-          requestBody: {
-            required: true,
+        responses: {
+          200: {
+            description: "Registro de signos vitales actualizado exitosamente",
             content: {
-              "multipart/form-data": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    // Definir propiedades de la terapia aquí
-                    file: {
-                      type: "string",
-                      format: "binary",
-                    },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            201: {
-              description: "Terapia creada exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/Terapia" },
-                },
+              "application/json": {
+                schema: { $ref: "#/components/schemas/SignosVitales" },
               },
             },
           },
         },
       },
-      "/api/fcc/terapias/{id}": {
-        get: {
-          summary: "Obtiene una terapia por ID",
-          tags: ["Terapias"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Terapia encontrada",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/Terapia" },
-                },
-              },
-            },
+      delete: {
+        summary: "Elimina un registro de signos vitales",
+        tags: ["Signos Vitales"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Registro de signos vitales eliminado exitosamente",
           },
         },
-        put: {
-          summary: "Actualiza una terapia",
-          tags: ["Terapias"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          requestBody: {
-            required: true,
+      },
+    },
+    "/api/fcc/terapias": {
+      get: {
+        summary: "Obtiene todas las terapias",
+        tags: ["Terapias"],
+        responses: {
+          200: {
+            description: "Lista de terapias",
             content: {
-              "multipart/form-data": {
+              "application/json": {
                 schema: {
-                  type: "object",
-                  properties: {
-                    // Definir propiedades de la terapia aquí
-                    file: {
-                      type: "string",
-                      format: "binary",
-                    },
-                  },
+                  type: "array",
+                  items: { $ref: "#/components/schemas/Terapia" },
                 },
               },
-            },
-          },
-          responses: {
-            200: {
-              description: "Terapia actualizada exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/Terapia" },
-                },
-              },
-            },
-          },
-        },
-        delete: {
-          summary: "Elimina una terapia",
-          tags: ["Terapias"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Terapia eliminada exitosamente",
             },
           },
         },
       },
-      "/api/fcc/tipo_especialidad": {
-        get: {
-          summary: "Obtiene todos los tipos de especialidad",
-          tags: ["Tipos de Especialidad"],
-          responses: {
-            200: {
-              description: "Lista de tipos de especialidad",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "array",
-                    items: { $ref: "#/components/schemas/TipoEspecialidad" },
+      post: {
+        summary: "Crea una nueva terapia",
+        tags: ["Terapias"],
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                properties: {
+                  // Definir propiedades de la terapia aquí
+                  file: {
+                    type: "string",
+                    format: "binary",
                   },
                 },
               },
             },
           },
         },
-        post: {
-          summary: "Crea un nuevo tipo de especialidad",
-          tags: ["Tipos de Especialidad"],
-          requestBody: {
+        responses: {
+          201: {
+            description: "Terapia creada exitosamente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Terapia" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/fcc/terapias/{id}": {
+      get: {
+        summary: "Obtiene una terapia por ID",
+        tags: ["Terapias"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
             required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Terapia encontrada",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Terapia" },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        summary: "Actualiza una terapia",
+        tags: ["Terapias"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                properties: {
+                  // Definir propiedades de la terapia aquí
+                  file: {
+                    type: "string",
+                    format: "binary",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Terapia actualizada exitosamente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Terapia" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        summary: "Elimina una terapia",
+        tags: ["Terapias"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Terapia eliminada exitosamente",
+          },
+        },
+      },
+    },
+    "/api/fcc/tipo_especialidad": {
+      get: {
+        summary: "Obtiene todos los tipos de especialidad",
+        tags: ["Tipos de Especialidad"],
+        responses: {
+          200: {
+            description: "Lista de tipos de especialidad",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/TipoEspecialidad" },
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        summary: "Crea un nuevo tipo de especialidad",
+        tags: ["Tipos de Especialidad"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/TipoEspecialidad" },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: "Tipo de especialidad creado exitosamente",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/TipoEspecialidad" },
               },
             },
           },
-          responses: {
-            201: {
-              description: "Tipo de especialidad creado exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/TipoEspecialidad" },
-                },
-              },
-            },
-          },
         },
       },
-      "/api/fcc/tipo_especialidad/{id}": {
-        get: {
-          summary: "Obtiene un tipo de especialidad por ID",
-          tags: ["Tipos de Especialidad"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Tipo de especialidad encontrado",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/TipoEspecialidad" },
-                },
-              },
-            },
-          },
-        },
-        put: {
-          summary: "Actualiza un tipo de especialidad",
-          tags: ["Tipos de Especialidad"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          requestBody: {
+    },
+    "/api/fcc/tipo_especialidad/{id}": {
+      get: {
+        summary: "Obtiene un tipo de especialidad por ID",
+        tags: ["Tipos de Especialidad"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
             required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Tipo de especialidad encontrado",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/TipoEspecialidad" },
               },
             },
           },
-          responses: {
-            200: {
-              description: "Tipo de especialidad actualizado exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/TipoEspecialidad" },
-                },
-              },
+        },
+      },
+      put: {
+        summary: "Actualiza un tipo de especialidad",
+        tags: ["Tipos de Especialidad"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/TipoEspecialidad" },
             },
           },
         },
-        delete: {
-          summary: "Elimina un tipo de especialidad",
-          tags: ["Tipos de Especialidad"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Tipo de especialidad eliminado exitosamente",
+        responses: {
+          200: {
+            description: "Tipo de especialidad actualizado exitosamente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/TipoEspecialidad" },
+              },
             },
           },
         },
       },
-      "/api/fcc/tipo_terapia": {
-        get: {
-          summary: "Obtiene todos los tipos de terapia",
-          tags: ["Tipos de Terapia"],
-          responses: {
-            200: {
-              description: "Lista de tipos de terapia",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "array",
-                    items: { $ref: "#/components/schemas/TipoTerapia" },
-                  },
+      delete: {
+        summary: "Elimina un tipo de especialidad",
+        tags: ["Tipos de Especialidad"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Tipo de especialidad eliminado exitosamente",
+          },
+        },
+      },
+    },
+    "/api/fcc/tipo_terapia": {
+      get: {
+        summary: "Obtiene todos los tipos de terapia",
+        tags: ["Tipos de Terapia"],
+        responses: {
+          200: {
+            description: "Lista de tipos de terapia",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/TipoTerapia" },
                 },
               },
             },
           },
         },
-        post: {
-          summary: "Crea un nuevo tipo de terapia",
-          tags: ["Tipos de Terapia"],
-          requestBody: {
-            required: true,
+      },
+      post: {
+        summary: "Crea un nuevo tipo de terapia",
+        tags: ["Tipos de Terapia"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/TipoTerapia" },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: "Tipo de terapia creado exitosamente",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/TipoTerapia" },
               },
             },
           },
-          responses: {
-            201: {
-              description: "Tipo de terapia creado exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/TipoTerapia" },
-                },
-              },
-            },
-          },
         },
       },
-      "/api/fcc/tipo_terapia/{id}": {
-        get: {
-          summary: "Obtiene un tipo de terapia por ID",
-          tags: ["Tipos de Terapia"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Tipo de terapia encontrado",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/TipoTerapia" },
-                },
-              },
-            },
-          },
-        },
-        put: {
-          summary: "Actualiza un tipo de terapia",
-          tags: ["Tipos de Terapia"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          requestBody: {
+    },
+    "/api/fcc/tipo_terapia/{id}": {
+      get: {
+        summary: "Obtiene un tipo de terapia por ID",
+        tags: ["Tipos de Terapia"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
             required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Tipo de terapia encontrado",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/TipoTerapia" },
               },
             },
           },
-          responses: {
-            200: {
-              description: "Tipo de terapia actualizado exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/TipoTerapia" },
+        },
+      },
+      put: {
+        summary: "Actualiza un tipo de terapia",
+        tags: ["Tipos de Terapia"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/TipoTerapia" },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Tipo de terapia actualizado exitosamente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/TipoTerapia" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        summary: "Elimina un tipo de terapia",
+        tags: ["Tipos de Terapia"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Tipo de terapia eliminado exitosamente",
+          },
+        },
+      },
+    },
+    "/api/fcc/users": {
+      get: {
+        summary: "Obtiene todos los usuarios",
+        tags: ["Usuarios"],
+        responses: {
+          200: {
+            description: "Lista de usuarios",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/Usuario" },
                 },
               },
             },
           },
         },
-        delete: {
-          summary: "Elimina un tipo de terapia",
-          tags: ["Tipos de Terapia"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
+      },
+      post: {
+        summary: "Crea un nuevo usuario",
+        tags: ["Usuarios"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/Usuario" },
             },
-          ],
-          responses: {
-            200: {
-              description: "Tipo de terapia eliminado exitosamente",
+          },
+        },
+        responses: {
+          201: {
+            description: "Usuario creado exitosamente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Usuario" },
+              },
             },
           },
         },
       },
-      "/api/fcc/users": {
-        get: {
-          summary: "Obtiene todos los usuarios",
-          tags: ["Usuarios"],
-          responses: {
-            200: {
-              description: "Lista de usuarios",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "array",
-                    items: { $ref: "#/components/schemas/Usuario" },
+    },
+    "/api/fcc/users/{id}": {
+      get: {
+        summary: "Obtiene un usuario por ID",
+        tags: ["Usuarios"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Usuario encontrado",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Usuario" },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        summary: "Actualiza un usuario",
+        tags: ["Usuarios"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/Usuario" },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Usuario actualizado exitosamente",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Usuario" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        summary: "Elimina un usuario",
+        tags: ["Usuarios"],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Usuario eliminado exitosamente",
+          },
+        },
+      },
+    },
+    "/api/fcc/users/login": {
+      post: {
+        summary: "Inicia sesión de usuario",
+        tags: ["Usuarios"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                  },
+                  password: {
+                    type: "string",
                   },
                 },
+                required: ["email", "password"],
               },
             },
           },
         },
-        post: {
-          summary: "Crea un nuevo usuario",
-          tags: ["Usuarios"],
-          requestBody: {
-            required: true,
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Usuario" },
-              },
-            },
-          },
-          responses: {
-            201: {
-              description: "Usuario creado exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/Usuario" },
-                },
-              },
-            },
-          },
-        },
-      },
-      "/api/fcc/users/{id}": {
-        get: {
-          summary: "Obtiene un usuario por ID",
-          tags: ["Usuarios"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Usuario encontrado",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/Usuario" },
-                },
-              },
-            },
-          },
-        },
-        put: {
-          summary: "Actualiza un usuario",
-          tags: ["Usuarios"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          requestBody: {
-            required: true,
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Usuario" },
-              },
-            },
-          },
-          responses: {
-            200: {
-              description: "Usuario actualizado exitosamente",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/Usuario" },
-                },
-              },
-            },
-          },
-        },
-        delete: {
-          summary: "Elimina un usuario",
-          tags: ["Usuarios"],
-          parameters: [
-            {
-              in: "path",
-              name: "id",
-              required: true,
-              schema: { type: "string" },
-            },
-          ],
-          responses: {
-            200: {
-              description: "Usuario eliminado exitosamente",
-            },
-          },
-        },
-      },
-      "/api/fcc/users/login": {
-        post: {
-          summary: "Inicia sesión de usuario",
-          tags: ["Usuarios"],
-          requestBody: {
-            required: true,
+        responses: {
+          200: {
+            description: "Inicio de sesión exitoso",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    email: {
-                      type: "string",
-                      format: "email",
-                    },
-                    password: {
+                    token: {
                       type: "string",
                     },
-                  },
-                  required: ["email", "password"],
-                },
-              },
-            },
-          },
-          responses: {
-            200: {
-              description: "Inicio de sesión exitoso",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "object",
-                    properties: {
-                      token: {
-                        type: "string",
-                      },
-                      user: {
-                        $ref: "#/components/schemas/Usuario",
-                      },
+                    user: {
+                      $ref: "#/components/schemas/Usuario",
                     },
                   },
                 },
               },
             },
-            401: {
-              description: "Credenciales inválidas",
-            },
           },
-        },
-      },
-'/uploads/pacientes/perfil/fotos/{img}': {
-      get: {
-        summary: 'Obtiene la imagen de perfil de un paciente',
-        tags: ['Uploads'],
-        parameters: [
-          {
-            in: 'path',
-            name: 'img',
-            required: true,
-            schema: { type: 'string' },
-            description: 'Nombre del archivo de imagen',
-          },
-        ],
-        responses: {
-          200: {
-            description: 'Imagen de perfil del paciente',
-            content: {
-              'image/*': {
-                schema: {
-                  type: 'string',
-                  format: 'binary',
-                },
-              },
-            },
-          },
-          404: {
-            description: 'Imagen no encontrada',
+          401: {
+            description: "Credenciales inválidas",
           },
         },
       },
     },
-    '/uploads/pacientes/cedulas/archivos/{file}': {
+    "/uploads/pacientes/perfil/fotos/{img}": {
       get: {
-        summary: 'Obtiene la cédula de un paciente',
-        tags: ['Uploads'],
+        summary: "Obtiene la imagen de perfil de un paciente",
+        tags: ["Uploads"],
         parameters: [
           {
-            in: 'path',
-            name: 'file',
+            in: "path",
+            name: "img",
             required: true,
-            schema: { type: 'string' },
-            description: 'Nombre del archivo de cédula',
+            schema: { type: "string" },
+            description: "Nombre del archivo de imagen",
           },
         ],
         responses: {
           200: {
-            description: 'Archivo de cédula del paciente',
+            description: "Imagen de perfil del paciente",
             content: {
-              'application/pdf': {
+              "image/*": {
                 schema: {
-                  type: 'string',
-                  format: 'binary',
+                  type: "string",
+                  format: "binary",
                 },
               },
             },
           },
           404: {
-            description: 'Archivo no encontrado',
+            description: "Imagen no encontrada",
           },
         },
       },
     },
-    '/uploads/pacientes/certificados/archivos/{file}': {
+    "/uploads/pacientes/cedulas/archivos/{file}": {
       get: {
-        summary: 'Obtiene el certificado médico de un paciente',
-        tags: ['Uploads'],
+        summary: "Obtiene la cédula de un paciente",
+        tags: ["Uploads"],
         parameters: [
           {
-            in: 'path',
-            name: 'file',
+            in: "path",
+            name: "file",
             required: true,
-            schema: { type: 'string' },
-            description: 'Nombre del archivo de certificado',
+            schema: { type: "string" },
+            description: "Nombre del archivo de cédula",
           },
         ],
         responses: {
           200: {
-            description: 'Archivo de certificado médico del paciente',
+            description: "Archivo de cédula del paciente",
             content: {
-              'application/pdf': {
+              "application/pdf": {
                 schema: {
-                  type: 'string',
-                  format: 'binary',
+                  type: "string",
+                  format: "binary",
                 },
               },
             },
           },
           404: {
-            description: 'Archivo no encontrado',
+            description: "Archivo no encontrado",
           },
         },
       },
     },
-    '/uploads/historia/{file}': {
+    "/uploads/pacientes/certificados/archivos/{file}": {
       get: {
-        summary: 'Obtiene un archivo de historia clínica',
-        tags: ['Uploads'],
+        summary: "Obtiene el certificado médico de un paciente",
+        tags: ["Uploads"],
         parameters: [
           {
-            in: 'path',
-            name: 'file',
+            in: "path",
+            name: "file",
             required: true,
-            schema: { type: 'string' },
-            description: 'Nombre del archivo de historia clínica',
+            schema: { type: "string" },
+            description: "Nombre del archivo de certificado",
           },
         ],
         responses: {
           200: {
-            description: 'Archivo de historia clínica',
+            description: "Archivo de certificado médico del paciente",
             content: {
-              'application/pdf': {
+              "application/pdf": {
                 schema: {
-                  type: 'string',
-                  format: 'binary',
+                  type: "string",
+                  format: "binary",
                 },
               },
             },
           },
           404: {
-            description: 'Archivo no encontrado',
+            description: "Archivo no encontrado",
           },
         },
       },
     },
-    '/uploads/personal/perfil/archivo/{img}': {
+    "/uploads/historia/{file}": {
       get: {
-        summary: 'Obtiene la imagen de perfil de un personal de salud',
-        tags: ['Uploads'],
+        summary: "Obtiene un archivo de historia clínica",
+        tags: ["Uploads"],
         parameters: [
           {
-            in: 'path',
-            name: 'img',
+            in: "path",
+            name: "file",
             required: true,
-            schema: { type: 'string' },
-            description: 'Nombre del archivo de imagen',
+            schema: { type: "string" },
+            description: "Nombre del archivo de historia clínica",
           },
         ],
         responses: {
           200: {
-            description: 'Imagen de perfil del personal de salud',
+            description: "Archivo de historia clínica",
             content: {
-              'image/*': {
+              "application/pdf": {
                 schema: {
-                  type: 'string',
-                  format: 'binary',
+                  type: "string",
+                  format: "binary",
                 },
               },
             },
           },
           404: {
-            description: 'Imagen no encontrada',
+            description: "Archivo no encontrado",
           },
         },
       },
     },
-    '/uploads/personal/hdv/archivo/{file}': {
+    "/uploads/personal/perfil/archivo/{img}": {
       get: {
-        summary: 'Obtiene el archivo de hoja de vida del personal de salud',
-        tags: ['Uploads'],
+        summary: "Obtiene la imagen de perfil de un personal de salud",
+        tags: ["Uploads"],
         parameters: [
           {
-            in: 'path',
-            name: 'file',
+            in: "path",
+            name: "img",
             required: true,
-            schema: { type: 'string' },
-            description: 'Nombre del archivo de hoja de vida',
+            schema: { type: "string" },
+            description: "Nombre del archivo de imagen",
           },
         ],
         responses: {
           200: {
-            description: 'Archivo de hoja de vida del personal de salud',
+            description: "Imagen de perfil del personal de salud",
             content: {
-              'application/pdf': {
+              "image/*": {
                 schema: {
-                  type: 'string',
-                  format: 'binary',
+                  type: "string",
+                  format: "binary",
                 },
               },
             },
           },
           404: {
-            description: 'Archivo no encontrado',
+            description: "Imagen no encontrada",
           },
         },
       },
     },
-    '/uploads/examenes/{id_historia}/{file}': {
+    "/uploads/personal/hdv/archivo/{file}": {
       get: {
-        summary: 'Obtiene un archivo de examen médico',
-        tags: ['Uploads'],
+        summary: "Obtiene el archivo de hoja de vida del personal de salud",
+        tags: ["Uploads"],
         parameters: [
           {
-            in: 'path',
-            name: 'id_historia',
+            in: "path",
+            name: "file",
             required: true,
-            schema: { type: 'string' },
-            description: 'ID de la historia clínica',
-          },
-          {
-            in: 'path',
-            name: 'file',
-            required: true,
-            schema: { type: 'string' },
-            description: 'Nombre del archivo de examen',
+            schema: { type: "string" },
+            description: "Nombre del archivo de hoja de vida",
           },
         ],
         responses: {
           200: {
-            description: 'Archivo de examen médico',
+            description: "Archivo de hoja de vida del personal de salud",
             content: {
-              'application/pdf': {
+              "application/pdf": {
                 schema: {
-                  type: 'string',
-                  format: 'binary',
+                  type: "string",
+                  format: "binary",
                 },
               },
             },
           },
           404: {
-            description: 'Archivo no encontrado',
+            description: "Archivo no encontrado",
           },
         },
       },
     },
-    '/uploads/terapias/{id_historia}/{file}': {
+    "/uploads/examenes/{id_historia}/{file}": {
       get: {
-        summary: 'Obtiene un archivo de terapia',
-        tags: ['Uploads'],
+        summary: "Obtiene un archivo de examen médico",
+        tags: ["Uploads"],
         parameters: [
           {
-            in: 'path',
-            name: 'id_historia',
+            in: "path",
+            name: "id_historia",
             required: true,
-            schema: { type: 'string' },
-            description: 'ID de la historia clínica',
+            schema: { type: "string" },
+            description: "ID de la historia clínica",
           },
           {
-            in: 'path',
-            name: 'file',
+            in: "path",
+            name: "file",
             required: true,
-            schema: { type: 'string' },
-            description: 'Nombre del archivo de terapia',
+            schema: { type: "string" },
+            description: "Nombre del archivo de examen",
           },
         ],
         responses: {
           200: {
-            description: 'Archivo de terapia',
+            description: "Archivo de examen médico",
             content: {
-              'application/pdf': {
+              "application/pdf": {
                 schema: {
-                  type: 'string',
-                  format: 'binary',
+                  type: "string",
+                  format: "binary",
                 },
               },
             },
           },
           404: {
-            description: 'Archivo no encontrado',
+            description: "Archivo no encontrado",
+          },
+        },
+      },
+    },
+    "/uploads/terapias/{id_historia}/{file}": {
+      get: {
+        summary: "Obtiene un archivo de terapia",
+        tags: ["Uploads"],
+        parameters: [
+          {
+            in: "path",
+            name: "id_historia",
+            required: true,
+            schema: { type: "string" },
+            description: "ID de la historia clínica",
+          },
+          {
+            in: "path",
+            name: "file",
+            required: true,
+            schema: { type: "string" },
+            description: "Nombre del archivo de terapia",
+          },
+        ],
+        responses: {
+          200: {
+            description: "Archivo de terapia",
+            content: {
+              "application/pdf": {
+                schema: {
+                  type: "string",
+                  format: "binary",
+                },
+              },
+            },
+          },
+          404: {
+            description: "Archivo no encontrado",
           },
         },
       },

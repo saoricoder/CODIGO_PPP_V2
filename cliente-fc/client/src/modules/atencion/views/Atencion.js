@@ -23,6 +23,10 @@ import AtencionButton from "../components/AtencionButton";
 import CuadroAtenciones from "../components/CuadroAtenciones";
 import { usePacienteContext } from "../../../components/base/PacienteContext";
 import ExamenesTabView from "../components/ExamenesTabView";
+import {
+  createAuditoria,
+  detalle_data,
+} from "../../../services/auditoriaServices";
 
 const Atencion = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -50,6 +54,13 @@ const Atencion = () => {
         const pacienteData = await getPaciente(selectedPaciente);
         if (pacienteData && pacienteData.id_paciente) {
           const atencionesData = await getAtenciones(selectedPaciente);
+          //creacion de auditoria
+          let data_auditoria = {};
+          data_auditoria.id_usuario = pacienteData.id_paciente;
+          data_auditoria.modulo = "Atencion";
+          data_auditoria.operacion = "Consultar";
+          data_auditoria.detalle = detalle_data(data_auditoria).selectTodoSql;
+          createAuditoria(data_auditoria);
           if (atencionesData.length === 0) {
             setIsFirstAttention(true);
           } else {
@@ -85,7 +96,6 @@ const Atencion = () => {
     setValue(newValue);
   };
 
-  
   return (
     <Box sx={{ display: "flex" }}>
       <NavbarAdmin onDrawerToggle={handleDrawerToggle} />
@@ -107,9 +117,7 @@ const Atencion = () => {
             sx={{ display: "flex", justifyContent: "space-around" }}
           >
             <Grid item xs={12} md={6} sx={{ paddingLeft: 2 }}>
-              <CuadroPaciente
-                isDeleteDisable={true}
-              />
+              <CuadroPaciente isDeleteDisable={true} />
             </Grid>
 
             <Grid
@@ -123,8 +131,8 @@ const Atencion = () => {
                 paddingRight: 2,
               }}
             >
-              <AtencionButton 
-                selectedPaciente={selectedPaciente} 
+              <AtencionButton
+                selectedPaciente={selectedPaciente}
                 isFirstAttention={isFirstAttention}
               />
             </Grid>
@@ -170,7 +178,7 @@ const Atencion = () => {
                     textTransform: "none",
                   }}
                 />
-                                <Tab
+                <Tab
                   label="Exámenes"
                   value="3"
                   sx={{
@@ -200,7 +208,7 @@ const Atencion = () => {
                 />
               ) : (
                 <Alert severity="info" sx={{ mt: 2 }}>
-                Seleccione Paciente para ver información
+                  Seleccione Paciente para ver información
                 </Alert>
               )}
             </TabPanel>

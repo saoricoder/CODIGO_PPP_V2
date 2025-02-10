@@ -131,6 +131,7 @@ export default function ResponsiveDrawer({ open, onClose }) {
       subItems: [
         { text: 'Usuarios', path: '/fcc-usuarios', icon: <GroupIcon /> },
         { text: 'Personal Salud', path: '/fcc-personal-salud', icon: <MedicalInformationIcon /> },
+        {text: 'Auditoría', path: '/fcc-auditoria', icon: <AssignmentTurnedInIcon/>}
       ]
     },
     { text: 'Perfil', path: '/perfil', icon: <AccountCircleIcon /> },

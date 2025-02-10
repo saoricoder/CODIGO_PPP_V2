@@ -54,3 +54,49 @@ export const deleteAuditoria = async (auditoriaId) => {
     throw error;
   }
 };
+
+export const detalle_data = (data) => {
+  let varibles_data = {};
+
+  // Obtener las claves, excluir "tabla" e "id" y concatenarlas
+  const nombres = Object.keys(data)
+    .filter((key) => key !== "tabla" && key !== "id") // Excluir las propiedades "tabla" e "id"
+    .join(", "); // Concatenar con coma
+
+  //Obtener los valores excluir los valor de tabla e id
+  const valores = Object.entries(data)
+    .filter(([key]) => key !== "tabla" && key !== "id") // Filtrar claves "tabla" e "id"
+    .map(([key, value]) => `'${value}'`) // Poner cada valor entre comillas
+    .join(", "); // Concatenar con coma
+
+  //dar formato nombre="valor"
+  const resultado = Object.entries(data)
+    .filter(([key]) => key !== "tabla" && key !== "id") // Excluir propiedades
+    .map(([key, value]) => `${key}="${value}"`)
+    .join(", ");
+
+  //obtner solo el id
+  const id = Object.entries(data)
+    .filter(([key]) => key === "id") // solo esta propiedades
+    .map(([key, value]) => `${key}="${value}"`)
+    .join(", ");
+
+  //variables de consulta sql
+
+  const insertSql =
+    "INSERT INTO " + data.tabla + " (" + nombres + ")VALUES (" + valores + ");";
+  const selectTodoSql = "SELECT " + nombres + " FROM " + data.tabla;
+  const updateSql =
+    "UPDATE " + data.tabla + " SET " + resultado + " WHERE " + id;
+  const deleteSql = "DELETE FROM " + data.tabla + " WHERE " + id;
+  const selectIdSql =
+    "SELECT " + nombres + " FROM " + data.tabla + " WHERE " + id;
+
+  varibles_data.insertSql = insertSql;
+  varibles_data.selectTodoSql = selectTodoSql;
+  varibles_data.selectIdSql = selectIdSql;
+  varibles_data.updateSql = updateSql;
+  varibles_data.deleteSql = deleteSql;
+
+  return varibles_data;
+};

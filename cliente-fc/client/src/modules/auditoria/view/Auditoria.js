@@ -42,7 +42,6 @@ const Auditoria = () => {
 
   const metrics = useMemo(() => {
     const safeAuditorias = auditorias || []; // Asegura que sea un array
-    console.log(auditorias);
     return {
       total: safeAuditorias.length,
       recientes: safeAuditorias.slice(0, 5),

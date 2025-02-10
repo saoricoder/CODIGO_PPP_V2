@@ -20,6 +20,11 @@ import Configuracion from './modules/configuracion/views/Configuracion';
 import { MenuProvider } from './components/base/MenuContext';
 import { PacienteProvider } from './components/base/PacienteContext';
 import Perfil from './modules/usuarios/views/Perfil';
+import Auditoria from './modules/auditoria/view/Auditoria';
+import VerAuditorias from './modules/auditoria/componets/verAuditorias';
+import ExportarAuditorias from './modules/auditoria/componets/exportarAuditoria';
+
+
 
 const CombinedProviders = ({ children }) => (
   <MenuProvider>
@@ -83,6 +88,19 @@ function App() {
             <Route 
               path="/nueva-terapia/:id" 
               element={<PrivateRoute element={NuevaTerapia} allowedRoles={['admin', 'doctor', 'personal_salud']} />} 
+            />
+            <Route 
+              path="/fcc-auditoria" 
+              element={<PrivateRoute element={Auditoria} allowedRoles={['admin']} />} 
+            />
+            <Route 
+              path="/fcc-ver-auditoria"
+              element={<PrivateRoute element={VerAuditorias} allowedRoles={['admin']} />} 
+            />
+
+            <Route 
+              path="/fcc-exportar-auditoria"
+              element={<PrivateRoute element={ExportarAuditorias} allowedRoles={['admin']} />} 
             />
             <Route 
               path="/accessdenied"
