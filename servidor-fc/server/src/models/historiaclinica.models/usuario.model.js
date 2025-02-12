@@ -16,11 +16,6 @@ class Usuario extends Model {
       foreignKey: "id_personal_salud",
       as: "personalsalud",
     });
-
-    Usuario.hasMany(models.Auditoria, {
-      foreignKey: "id_usuario",
-      as: "auditorias",
-    });
   }
 }
 

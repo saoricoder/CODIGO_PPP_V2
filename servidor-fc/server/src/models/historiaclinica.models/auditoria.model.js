@@ -11,12 +11,7 @@ class Auditoria extends Model {
     };
   }
 
-  static associate(models) {
-    Auditoria.belongsTo(models.Usuario, {
-      foreignKey: "id_usuario",
-      as: "usuario",
-    });
-  }
+  static associate(models) {}
 }
 
 const AuditoriaSchema = {
@@ -44,6 +39,8 @@ const AuditoriaSchema = {
           "EDITAR",
           "ELIMINAR",
           "CONSULTAR",
+          "UPDATE",
+          "Update",
           "Crear",
           "Editar",
           "Eliminar",
