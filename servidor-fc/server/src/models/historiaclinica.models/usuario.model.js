@@ -4,7 +4,7 @@ class Usuario extends Model {
   static config(sequelize) {
     return {
       sequelize,
-      tableName: "usuario",
+      tableName: 'usuario',
       modelName: "Usuario",
       schema: "fcc_historiaclinica",
       timestamps: true,
@@ -13,8 +13,8 @@ class Usuario extends Model {
 
   static associate(models) {
     Usuario.belongsTo(models.PersonalSalud, {
-      foreignKey: "id_personal_salud",
-      as: "personalsalud",
+      foreignKey: 'id_personal_salud',
+      as: 'personalsalud',
     });
   }
 }
