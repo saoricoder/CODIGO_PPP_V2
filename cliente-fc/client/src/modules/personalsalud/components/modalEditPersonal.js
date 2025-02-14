@@ -8,7 +8,7 @@ import { updatePersonalSalud, getEspecialidades, getTipoEspecialidad } from '../
 import { TextInput, PhoneInput, AutocompleteInput, FileInput, DateInput } from '../../../components/Inputs';
 import { tipoIdentificacion,  paises } from '../../../components/data/Data';
 import dayjs from "dayjs";
-
+import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
 const steps = ['Información Personal', 'Información de Contacto', 'Información Profesional'];
 
 const ModalEditPersonalSalud = ({ open, onClose, personalData, onPersonalSaludUpdated }) => {
@@ -161,6 +161,24 @@ const ModalEditPersonalSalud = ({ open, onClose, personalData, onPersonalSaludUp
       if (response) {
         setSuccessAlert(true);
         onPersonalSaludUpdated();
+                // Registrar auditoría
+                try {
+                  let data_auditoria = {};
+                  data_auditoria.id_usuario = response.id_personalsalud; 
+                  data_auditoria.modulo = "Personal Salud"; 
+                  data_auditoria.operacion = "Editar";
+                  const dataForAudit={
+                    ...personalSalud,
+                    tabla:"personal_salud",
+                    id:response.id_personalsalud,
+                  };
+                  data_auditoria.detalle = detalle_data(dataForAudit).insertSql;
+          
+                  await createAuditoria(data_auditoria); 
+                  console.log("Auditoría registrada:", data_auditoria);
+                } catch (error) {
+                  console.error("Error al registrar auditoría:", error);
+                }
         onClose();
       } else {
         throw new Error('La respuesta del servidor no indica éxito');

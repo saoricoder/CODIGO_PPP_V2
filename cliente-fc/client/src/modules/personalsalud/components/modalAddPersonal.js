@@ -27,8 +27,8 @@ import {
 } from "../../../components/Inputs";
 import { tipoIdentificacion, paises } from "../../../components/data/Data";
 import dayjs from "dayjs";
-import { createAtencion } from "../../../services/atencion";
-import { createAuditoria } from "../../../services/auditoriaServices";
+//import { createAtencion } from "../../../services/atencion";
+import { createAuditoria,detalle_data } from "../../../services/auditoriaServices";
 
 const steps = [
   "Información Personal",
@@ -181,37 +181,57 @@ const ModalAddPersonalSalud = ({ open, onClose, onPersonalSaludAdded }) => {
 
   const handleSave = async () => {
     if (!validateFields()) return;
-
+  
     setIsSubmitting(true);
-    const formData = new FormData();
 
+    const formData = new FormData();
+  
+    // Agregar datos del personal de salud al FormData
     Object.keys(personalSalud).forEach((key) => {
       if (key !== "foto_personal" && key !== "hdv_personal") {
         formData.append(key, personalSalud[key]);
       }
     });
-
+  
+    // Agregar archivos (foto y hoja de vida) si están presentes
     if (personalSalud.foto_personal) {
       formData.append("foto_personal", personalSalud.foto_personal);
     }
-
     if (personalSalud.hdv_personal) {
       formData.append("hdv_personal", personalSalud.hdv_personal);
     }
-
+  
+    // Agregar fecha de registro
     formData.append("fecha_registro_personal", dayjs().format("YYYY-MM-DD"));
-
+  
     try {
+      // Crear el personal de salud
       const response = await createPersonalSalud(formData);
-      let data = {};
+  
       if (response && response.success === true) {
+        // Notificar que se ha añadido un nuevo personal de salud
         onPersonalSaludAdded(true);
-        data.id_usuario = 254675;
-        data.modulo = "Personal Salud";
-        data.operacion = "CREAR";
-        data.detalle = "POST";
-        createAuditoria(data);
-        console.log(data);
+  
+        // Registrar auditoría
+        try {
+          let data_auditoria = {};
+          data_auditoria.id_usuario = response.id_personalsalud; 
+          data_auditoria.modulo = "Personal Salud"; 
+          data_auditoria.operacion = "CREAR";
+          const dataForAudit={
+            ...personalSalud,
+            tabla:"personal_salud",
+            id:response.id_personalsalud,
+          };
+          data_auditoria.detalle = detalle_data(dataForAudit).insertSql;
+  
+          await createAuditoria(data_auditoria); 
+          console.log("Auditoría registrada:", data_auditoria);
+        } catch (error) {
+          console.error("Error al registrar auditoría:", error);
+        }
+  
+        // Cerrar el modal
         onClose();
       } else {
         throw new Error("La respuesta del servidor no indica éxito");

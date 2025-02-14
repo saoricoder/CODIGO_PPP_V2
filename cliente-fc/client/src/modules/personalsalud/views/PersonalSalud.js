@@ -9,7 +9,7 @@ import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import { getPersonalSaludId, deleteLogicalPersonalSalud, getPersonalSalud } from '../../../services/personalsaludServices';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { useState, useEffect } from 'react';
-
+import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
 import BuscarPersonal from '../components/buscarPersonal';
 import ModalAddPersonalSalud from '../components/modalAddPersonal';
 import ModalEditPersonalSalud from '../components/modalEditPersonal';
@@ -85,6 +85,20 @@ const PersonalSalud = () => {
     await deleteLogicalPersonalSalud(id);
     fetchPersonalSalud();
     handleAlertClose();
+    // Registrar auditoría de eliminación
+    try {
+      const personal = await getPersonalSaludId(id);
+      let data_auditoria = {};
+      data_auditoria.id_usuario = personal.id_personalsalud; // ID del usuario que realiza la acción
+      data_auditoria.modulo = "Personal Salud"; // Módulo
+      data_auditoria.operacion = "Eliminar"; // Operación
+      
+      data_auditoria.detalle = detalle_data(personal).insertSql;
+      await createAuditoria(data_auditoria);
+
+    } catch (error) {
+      console.error("Error al registrar auditoría:", error);
+    }
   };
 
   const handleSearch = (name) => {
