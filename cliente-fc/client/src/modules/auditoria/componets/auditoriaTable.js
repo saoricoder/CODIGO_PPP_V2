@@ -142,7 +142,7 @@ const AuditoriasTable = () => {
                   <StyledTableCell>Operación</StyledTableCell>
                   <StyledTableCell>Módulo</StyledTableCell>
                   <StyledTableCell>Detalle</StyledTableCell>
-                  <StyledTableCell align="center">Acciones</StyledTableCell>
+                  {/*<StyledTableCell align="center">Acciones</StyledTableCell>*/}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -169,7 +169,7 @@ const AuditoriasTable = () => {
                         <StyledTableCell>{auditoria.operacion}</StyledTableCell>
                         <StyledTableCell>{auditoria.modulo}</StyledTableCell>
                         <StyledTableCell>{auditoria.detalle}</StyledTableCell>
-                        <StyledTableCell align="center">
+                        {/*<StyledTableCell align="center">
                           <Tooltip title="Editar Auditoría">
                             <IconButton
                               color="primary"
@@ -183,7 +183,7 @@ const AuditoriasTable = () => {
                               <EditIcon />
                             </IconButton>
                           </Tooltip>
-                        </StyledTableCell>
+                        </StyledTableCell>*/}
                       </StyledTableRow>
                     ))
                 )}
