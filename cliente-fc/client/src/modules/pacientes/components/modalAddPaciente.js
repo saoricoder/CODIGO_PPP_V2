@@ -14,7 +14,7 @@ import dayjs from "dayjs";
 import { DateInput, TextInput, PhoneInput, AutocompleteInput, FileInput, TextareaInput} from '../../../components/Inputs';
 import {matchIsValidTel}  from "mui-tel-input";
 import {steps, tipoIdentificacion, tiposSangre, genderOptions, parentescos, paises} from '../../../components/data/Data';
-
+import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
 
 import "dayjs/locale/en-gb";
 
@@ -289,6 +289,20 @@ const ModalAddPaciente = ({ open, onClose, onPacienteAdded }) => {
       const response = await createPaciente(formData);
       if (response && response.success === true) {
         console.log('Paciente guardado con éxito:', response.data);
+
+        try {
+                // Creación de auditoría
+                let data_auditoria = {};
+                data_auditoria.id_usuario = response.data.id_paciente;
+                data_auditoria.modulo = "Paciente1";
+                data_auditoria.operacion = "Crear";
+                data_auditoria.detalle = detalle_data(response.data).insertSql;
+                
+                await createAuditoria(data_auditoria);
+                console.log('Auditoría creada con éxito:');
+        }catch(error){
+          console.log('Error al crear auditoría:', error);
+        }
         onPacienteAdded(true);
         handleClose();
       } else {

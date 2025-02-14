@@ -45,6 +45,8 @@ const AuditoriaSchema = {
           "Editar",
           "Eliminar",
           "Consultar",
+          "Desactivar",
+          "DESCARGAR",
         ],
       ], // Restricción de valores posibles
     },

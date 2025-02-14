@@ -7,7 +7,7 @@ import { useMediaQuery } from "@mui/material";
 import { matchIsValidTel } from "mui-tel-input";
 import { steps, tipoIdentificacion, tiposSangre, genderOptions, parentescos, paises } from '../../../components/data/Data';
 import "dayjs/locale/en-gb";
-
+import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
 dayjs.locale("en-gb");
 
 const ModalEditPaciente = ({ open, onClose, pacienteData, onPacienteUpdated }) => {
@@ -245,6 +245,19 @@ const ModalEditPaciente = ({ open, onClose, pacienteData, onPacienteUpdated }) =
 
       if (response) {
         console.log('Paciente actualizado con éxito:', response.data);
+                try {
+                        // Creación de auditoría
+                        let data_auditoria = {};
+                        data_auditoria.id_usuario = response.data.id_paciente;
+                        data_auditoria.modulo = "Paciente1";
+                        data_auditoria.operacion = "Editar";
+                        data_auditoria.detalle = detalle_data(response.data).insertSql;
+                        
+                        await createAuditoria(data_auditoria);
+                        console.log('Auditoría creada con éxito:');
+                }catch(error){
+                  console.log('Error al crear auditoría:', error);
+                }
         onPacienteUpdated(true);
         handleClose();
       } else {

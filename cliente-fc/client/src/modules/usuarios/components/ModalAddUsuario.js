@@ -14,7 +14,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { getPersonalSalud } from '../../../services/personalsaludServices';
-
+import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
 export default function ModalAddUsuario({ open, onClose, onAddUser, existingUsers }) {
   const [personalSalud, setPersonalSalud] = useState([]);
   const [selectedPersonal, setSelectedPersonal] = useState(null);
@@ -71,7 +71,26 @@ export default function ModalAddUsuario({ open, onClose, onAddUser, existingUser
       rol_usuario: role,
       estado_usuario: true,
     };
+    try {
+      // Registrar auditoría
+      const dataForAudit = {
+        ...newUser,
+        tabla: "usuarios", 
+        id: newUser.id_usuario, 
+      };
 
+      const data_auditoria = {
+        id_usuario: newUser.id_usuario, 
+        modulo: "Usuarios", 
+        operacion: "CREAR", 
+        detalle: detalle_data(dataForAudit).insertSql, 
+      };
+
+      await createAuditoria(data_auditoria); // Registrar la auditoría
+      console.log("Auditoría registrada:", data_auditoria);
+    } catch (error) {
+      console.error("Error al registrar auditoría:", error);
+    }
     onAddUser(newUser);
   };
 

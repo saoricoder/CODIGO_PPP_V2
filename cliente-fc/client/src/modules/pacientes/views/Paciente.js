@@ -15,7 +15,7 @@ import ModalAddPaciente from '../components/modalAddPaciente';
 import ModalEditPaciente from '../components/modalEditPaciente';
 import BuscarPaciente from '../components/buscarPaciente';
 import { deleteLogicalPaciente, getPaciente, getPacientes } from '../../../services/pacientesServices';
-
+import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
 import "dayjs/locale/en-gb";
 import dayjs from 'dayjs';
 dayjs.locale("en-gb"); // Set dayjs locale to British English
@@ -78,14 +78,29 @@ const Paciente = () => {
   };
 
   // Handle patient addition result
-  const handlePacienteAdded = (success) => {
+
+  const handlePacienteAdded = async (success, data) => {
     if (success) {
       fetchPacientes();
       setSuccessAlert(true);
+
+      try {
+        // Creación de auditoría
+        let data_auditoria = {};
+        data_auditoria.id_usuario = data.id_paciente;
+        data_auditoria.modulo = "Paciente";
+        data_auditoria.operacion = "Crear";
+        data_auditoria.detalle = detalle_data(data).insertSql;
+        
+        await createAuditoria(data_auditoria);
+      } catch (error) {
+        console.error("Error al registrar auditoría:", error);
+      }
     } else {
       setErrorAlert(true);
     }
   };
+
 
   // Handle edit patient action
   const handleEdit = async (id) => {
@@ -93,6 +108,18 @@ const Paciente = () => {
     paciente.fecha_paciente = dayjs(paciente.fecha_paciente).format('YYYY-MM-DD');
     setSelectedPaciente(paciente);
     setEditModalOpen(true);
+    try {
+      // Creación de auditoría
+      let data_auditoria = {};
+      data_auditoria.id_usuario = paciente.id_paciente;
+      data_auditoria.modulo = "Paciente";
+      data_auditoria.operacion = "Editar";
+      data_auditoria.detalle = detalle_data(paciente).insertSql;
+      
+      await createAuditoria(data_auditoria);
+    } catch (error) {
+      console.error("Error al registrar auditoría:", error);
+    }
   };
 
   // Handle delete patient action
@@ -101,6 +128,18 @@ const Paciente = () => {
     const paciente = await getPaciente(id);
     setSelectedStatePaciente(paciente.estado_paciente);
     handleAlertOpen();
+    try {
+      // Creación de auditoría
+      let data_auditoria = {};
+      data_auditoria.id_usuario = paciente.id_paciente;
+      data_auditoria.modulo = "Paciente0";
+      data_auditoria.operacion = "Eliminar";
+      data_auditoria.detalle = detalle_data(paciente).insertSql;
+      
+      await createAuditoria(data_auditoria);
+    } catch (error) {
+      console.error("Error al registrar auditoría:", error);
+    }
   };
 
   // Open "Add Patient" modal
