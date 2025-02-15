@@ -9,9 +9,10 @@ import {
   CardHeader,
   CardContent,
   CircularProgress,
+  Tooltip,
   IconButton,
   InputAdornment,
-  Tooltip,
+
   Container,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -26,7 +27,7 @@ import AuditoriasTable from "./auditoriaTable";
 const VerAuditorias = () => {
   const [auditorias, setAuditorias] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filterDate, setFilterDate] = useState("");
   const [filterUser, setFilterUser] = useState("");

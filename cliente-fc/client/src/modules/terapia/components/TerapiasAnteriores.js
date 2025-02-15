@@ -12,7 +12,7 @@ import dayjs from 'dayjs';
 import PdfGeneratorTerapias from '../../../components/PdfGeneratorTerapias';
 import { API_IMAGE_URL } from "../../../services/apiConfig";
 import TerapiaDetailsDialog from './TerapiaDetailsDialog'; // Asegúrate de que la ruta sea correcta
-
+import { createAuditoria, detalle_data } from "../../../services/auditoriaServices";
 const tiposTerapia = [
   { id: 'all', name: 'Todas las Terapias' },
   { id: '1', name: 'Terapia de Lenguaje' },
@@ -112,6 +112,28 @@ const TerapiasAnteriores = ({ terapias, tipoTerapia, handleChangeTipoTerapia, ha
         setFilteredTerapias(prevTerapias => 
           prevTerapias.map(t => t.id_terapia === updatedTerapia.id_terapia ? updatedTerapia : t)
         );
+
+        // Registrar auditoría de actualización
+        try {
+          const dataForAudit = {
+            ...updatedTerapia,
+            tabla: "terapias2", // Nombre de la tabla en la base de datos
+            id: updatedTerapia.id_terapia, // ID del registro actualizado
+          };
+
+          const data_auditoria = {
+            id_usuario: updatedTerapia.id_usuario, // ID del usuario que realiza la acción
+            modulo: "Terapias", // Módulo en el que se realiza la acción
+            operacion: "ACTUALIZAR", // Operación realizada
+            detalle: detalle_data(dataForAudit).updateSql, // Script SQL de actualización
+          };
+
+          await createAuditoria(data_auditoria); // Registrar la auditoría
+          console.log("Auditoría de actualización registrada:", data_auditoria);
+        } catch (error) {
+          console.error("Error al registrar auditoría de actualización:", error);
+        }
+
         handleCloseModal();
       } catch (error) {
         console.error("Error updating terapia:", error);
@@ -122,10 +144,36 @@ const TerapiasAnteriores = ({ terapias, tipoTerapia, handleChangeTipoTerapia, ha
 
   const handleConfirmDelete = async () => {
     if (terapiaToDelete) {
-      await handleDeleteTerapia(terapiaToDelete.id_terapia);
-      handleCloseDeleteDialog();
-      // Actualiza la lista de terapias después de eliminar
-      setFilteredTerapias(prevTerapias => prevTerapias.filter(t => t.id_terapia !== terapiaToDelete.id_terapia));
+      try {
+        await handleDeleteTerapia(terapiaToDelete.id_terapia);
+
+        // Registrar auditoría de eliminación
+        try {
+          const dataForAudit = {
+            ...terapiaToDelete,
+            tabla: "terapias", // Nombre de la tabla en la base de datos
+            id: terapiaToDelete.id_terapia, // ID del registro eliminado
+          };
+
+          const data_auditoria = {
+            id_usuario: terapiaToDelete.id_usuario, // ID del usuario que realiza la acción
+            modulo: "Terapias", // Módulo en el que se realiza la acción
+            operacion: "ELIMINAR", // Operación realizada
+            detalle: detalle_data(dataForAudit).deleteSql, // Script SQL de eliminación
+          };
+
+          await createAuditoria(data_auditoria); // Registrar la auditoría
+          console.log("Auditoría de eliminación registrada:", data_auditoria);
+        } catch (error) {
+          console.error("Error al registrar auditoría de eliminación:", error);
+        }
+
+        handleCloseDeleteDialog();
+        // Actualiza la lista de terapias después de eliminar
+        setFilteredTerapias(prevTerapias => prevTerapias.filter(t => t.id_terapia !== terapiaToDelete.id_terapia));
+      } catch (error) {
+        console.error("Error deleting terapia:", error);
+      }
     }
   };
 

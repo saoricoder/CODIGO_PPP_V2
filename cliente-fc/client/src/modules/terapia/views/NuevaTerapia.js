@@ -36,7 +36,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getPaciente } from '../../../services/pacientesServices';
 import { createTerapia, getTerapiaByPaciente, getLastTerapia } from '../../../services/terapia';
 import { getHistoria, getHistoriaFile } from '../../../services/historiaServices';
-
+import { createAuditoria, detalle_data } from "../../../services/auditoriaServices";
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
   display: 'flex',
@@ -375,14 +375,37 @@ const SistemaTerapias = () => {
     }
   
     try {
-      await createTerapia(formData);
+      const response = await createTerapia(formData);
       console.log('Terapia guardada exitosamente');
+
+      // Registrar auditoría de creación
+      try {
+        const dataForAudit = {
+          ...response, // Datos de la terapia creada
+          tabla: "terapias", // Nombre de la tabla en la base de datos
+          id: response.id_personalsalud, // ID del registro creado
+        };
+
+        const data_auditoria = {
+          id_usuario: response.id_personalsalud, // ID del usuario que realiza la acción
+          modulo: "Terapias", // Módulo en el que se realiza la acción
+          operacion: "CREAR", // Operación realizada
+          detalle: detalle_data(dataForAudit).insertSql, // Script SQL de inserción
+        };
+
+        await createAuditoria(data_auditoria); // Registrar la auditoría
+        console.log("Auditoría de creación registrada:", data_auditoria);
+      } catch (error) {
+        console.error("Error al registrar auditoría de creación:", error);
+      }
+
       navigate('/Fcc-terapias');
     } catch (error) {
       console.error('Error al guardar la terapia:', error);
-      // Here you might want to show an error message to the user
+      // Aquí puedes mostrar un mensaje de error al usuario
     }
   };
+
 
   const handleCancel = () => {
     navigate('/Fcc-terapias');

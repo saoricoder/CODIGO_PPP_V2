@@ -22,7 +22,7 @@ import {
   Tooltip,
   CircularProgress,
 } from "@mui/material";
-import { Edit as EditIcon } from "@mui/icons-material";
+//import { Edit as EditIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { getAuditorias } from "../../../services/auditoriaServices";
 
@@ -165,7 +165,8 @@ const AuditoriasTable = () => {
                         <StyledTableCell>
                           {new Date(auditoria.fecha).toLocaleString()}
                         </StyledTableCell>
-                        <StyledTableCell>{auditoria.usuario}</StyledTableCell>
+                        <StyledTableCell>{auditoria.id_usuario}</StyledTableCell>
+
                         <StyledTableCell>{auditoria.operacion}</StyledTableCell>
                         <StyledTableCell>{auditoria.modulo}</StyledTableCell>
                         <StyledTableCell>{auditoria.detalle}</StyledTableCell>

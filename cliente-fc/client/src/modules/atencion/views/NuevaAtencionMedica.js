@@ -27,25 +27,12 @@ import TablaOrganos from "../components/TablaOrganos";
 import TablaExamenFisico from "../components/TablaExamenFisico";
 import Diagnostico from "../components/Diagnostico";
 import Tratamiento from "../components/Tratamiento";
-import {
-  createAtencion,
-  createSignosVitales,
-} from "../../../services/atencion";
-import {
-  getHistoria,
-  updateHistoria,
-} from "../../../services/historiaServices";
-import {
-  organs,
-  regions,
-  NewAtencionSteps,
-} from "../../../components/data/Data";
+import {createAtencion,createSignosVitales,} from "../../../services/atencion";
+import {getHistoria,updateHistoria,} from "../../../services/historiaServices";
+import {organs,regions,NewAtencionSteps,} from "../../../components/data/Data";
 import { usePacienteContext } from "../../../components/base/PacienteContext";
 import Antecedentes from "../../historia/components/Antecedentes";
-import {
-  createAuditoria,
-  detalle_data,
-} from "../../../services/auditoriaServices";
+import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
 
 const steps = NewAtencionSteps;
 
