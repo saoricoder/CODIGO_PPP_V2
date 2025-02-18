@@ -45,8 +45,8 @@ const ExportarAuditorias = () => {
   const handleExport = () => {
     const filteredAuditorias = auditorias.filter((auditoria) => {
       const fechaAuditoria = new Date(auditoria.fecha);
-      const start = startDate ? new Date(startDate) : null;
-      const end = endDate ? new Date(endDate) : null;
+      const start = startDate ? new Date(startDate + 'T00:00:00') : null;
+      const end = endDate ? new Date(endDate + 'T23:59:59') : null;
 
       if (start && end) {
         return fechaAuditoria >= start && fechaAuditoria <= end;
@@ -58,9 +58,10 @@ const ExportarAuditorias = () => {
       return true;
     });
 
-    const dataForPDF = filteredAuditorias.map((auditoria) => ({
+    console.log('Sample fecha:', filteredAuditorias[0]?.fecha);
+        const dataForPDF = filteredAuditorias.map((auditoria) => ({
       id: auditoria.id_auditoria,
-      fecha: new Date(auditoria.fecha).toLocaleString(),
+      fecha: formatDate(auditoria.fecha),
       modulo: auditoria.modulo,
       usuario: auditoria.usuario,
       operacion: auditoria.operacion,
@@ -70,6 +71,19 @@ const ExportarAuditorias = () => {
     generarPDF(dataForPDF, "Reporte de Auditorías");
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return "Fecha inválida";
+    }
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
   const handleGoBack = () => navigate("/fcc-auditoria");
 
   const handleDrawerToggle = () => setDrawerOpen(!drawerOpen);

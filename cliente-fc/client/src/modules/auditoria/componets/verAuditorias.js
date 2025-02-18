@@ -26,8 +26,8 @@ import AuditoriasTable from "./auditoriaTable";
 
 const VerAuditorias = () => {
   const [auditorias, setAuditorias] = useState([]);
+  const [filteredAuditorias, setFilteredAuditorias] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filterDate, setFilterDate] = useState("");
   const [filterUser, setFilterUser] = useState("");
@@ -38,10 +38,10 @@ const VerAuditorias = () => {
       setLoading(true);
       try {
         const data = await getAuditorias();
-        setAuditorias(Array.isArray(data) ? data : []); // Evita que sea undefined
+        setAuditorias(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error al obtener auditorías:", error);
-        setAuditorias([]); // Evita undefined en caso de error
+        setAuditorias([]);
       } finally {
         setLoading(false);
       }
@@ -52,6 +52,21 @@ const VerAuditorias = () => {
   const handleClearFilters = () => {
     setFilterDate("");
     setFilterUser("");
+    setFilteredAuditorias([]);
+  };
+
+  const handleApplyFilters = () => {
+    const filtered = auditorias.filter((auditoria) => {
+      const dateMatch = !filterDate || 
+        (auditoria.fecha && auditoria.fecha.includes(filterDate));
+      
+      const userMatch = !filterUser || 
+        (auditoria.id_usuario && 
+         auditoria.id_usuario.toString().toLowerCase().includes(filterUser.toLowerCase()));
+      
+      return dateMatch && userMatch;
+    });
+    setFilteredAuditorias(filtered);
   };
 
   const handleDrawerToggle = () => setDrawerOpen(!drawerOpen);
@@ -147,6 +162,7 @@ const VerAuditorias = () => {
                     fullWidth
                     variant="contained"
                     color="primary"
+                    onClick={handleApplyFilters}
                     sx={{ height: 45, fontWeight: "bold" }}
                   >
                     Aplicar Filtros
@@ -177,15 +193,9 @@ const VerAuditorias = () => {
                 <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
                   <CircularProgress size={50} color="primary" />
                 </Box>
-              ) : error ? (
-                <Typography
-                  sx={{ textAlign: "center", color: "error.main", py: 2 }}
-                >
-                  {error}
-                </Typography>
-              ) : auditorias.length > 0 ? (
+              ) : (filteredAuditorias.length > 0 || auditorias.length > 0) ? (
                 <AuditoriasTable
-                  auditorias={auditorias}
+                  auditorias={filteredAuditorias.length > 0 ? filteredAuditorias : auditorias}
                   onEditAuditoria={(id) => navigate(`/editar-auditoria/${id}`)}
                 />
               ) : (
