@@ -7,6 +7,9 @@ import "jspdf-autotable";
  * @param {string} title - Título del documento.
  */
 export function generarPDF(data, title) {
+  console.log('Fecha original:', data[0]?.fecha);
+  console.log('Tipo de fecha:', typeof data[0]?.fecha);
+  console.log('Datos recibidos:', data[0]); // Para ver el formato de los datos
   const doc = new jsPDF();
   doc.setFontSize(18);
   doc.text(title, 14, 22);
@@ -22,17 +25,44 @@ export function generarPDF(data, title) {
     { header: "Módulo", dataKey: "modulo" },
     { header: "Detalle", dataKey: "detalle" },
   ];
-
   // Mapeo de datos con la nueva estructura
-  const rows = data.map((item) => ({
-    id: item.id,
-    fecha: new Date(item.fecha).toLocaleString(),
-    operacion: item.operacion,
-    usuario: item.usuario,
-    modulo: item.modulo,
-    detalle: item.detalle,
-  }));
+  const rows = data.map((item) => {
+    let formattedDate;
+    try {
+      if (!item.fecha) {
+        formattedDate = 'Fecha no disponible';
+      } else {
+        const rawDate = item.fecha.replace('T', ' ').split('.')[0];
+        const date = new Date(rawDate);
+        
+        if (isNaN(date.getTime())) {
+          formattedDate = 'Fecha no disponible';
+        } else {
+          formattedDate = date.toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error al formatear fecha:', item.fecha);
+      formattedDate = 'Fecha no disponible';
+    }
 
+    return {
+      id: item.id,
+      fecha: formattedDate,
+      operacion: item.operacion,
+      usuario: item.usuario,
+      modulo: item.modulo,
+      detalle: item.detalle,
+    };
+  });
   // Generar la tabla en el PDF
   doc.autoTable({
     head: [columns.map((col) => col.header)],
