@@ -68,7 +68,7 @@ const ModalAddPaciente = ({ open, onClose, onPacienteAdded }) => {
   const handleClose = () => {
     onClose();
   };
-
+  
   
   const validateDNI = (value) => {
     if (value.length !== 10) {
@@ -291,12 +291,18 @@ const ModalAddPaciente = ({ open, onClose, onPacienteAdded }) => {
         console.log('Paciente guardado con éxito:', response.data);
 
         try {
+                // Verificar el id_usuario antes de crear la auditoría
+                console.log('ID del usuario para auditoría:', response.data.id_usuario);
+
                 // Creación de auditoría
                 let data_auditoria = {};
-                data_auditoria.id_usuario = response.data.id_paciente;
-                data_auditoria.modulo = "Paciente1";
+                data_auditoria.id_usuario = response.data.id_usuario; // Asegúrate de que este ID sea correcto
+                data_auditoria.modulo = "Paciente";
                 data_auditoria.operacion = "Crear";
-                data_auditoria.detalle = detalle_data(response.data).insertSql;
+                data_auditoria.detalle = detalle_data({
+                    ...response.data,
+                    tabla: "paciente" // Asegúrate de incluir el nombre de la tabla aquí
+                }).insertSql;
                 
                 await createAuditoria(data_auditoria);
                 console.log('Auditoría creada con éxito:');

@@ -11,7 +11,12 @@ class Auditoria extends Model {
     };
   }
 
-  static associate(models) {}
+  static associate(models) {
+    Auditoria.belongsTo(models.Usuario, {
+      foreignKey: 'id_usuario',
+      as: 'usuario',
+    });
+  }
 }
 
 const AuditoriaSchema = {
@@ -59,6 +64,16 @@ const AuditoriaSchema = {
     allowNull: true,
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW, // Registrar la fecha automáticamente
+  },
+  hora_ingreso: {
+    allowNull: true,
+    type: DataTypes.TIME,
+    defaultValue: DataTypes.NOW, // Set default to current time
+  },
+  hora_salida: {
+    allowNull: true,
+    type: DataTypes.TIME,
+    defaultValue: DataTypes.NOW, // Set default to current time
   },
 };
 
