@@ -14,13 +14,20 @@ class AuditoriaService {
   }
 
   async create(data) {
-    console.log(data);
     try {
-      const res = await models.Auditoria.create(data);
+      // Asegurarse de que las fechas estén en el formato correcto
+      const currentDate = new Date();
+      const formattedData = {
+        ...data,
+        fecha: currentDate.toISOString().split('T')[0],
+        hora_ingreso: currentDate.toTimeString().split(' ')[0],
+        hora_salida: currentDate.toTimeString().split(' ')[0]
+      };
+      const res = await models.Auditoria.create(formattedData);
       return res;
     } catch (error) {
       console.error("Error al crear auditoría:", error);
-      throw error; // O manejar el error de alguna otra forma
+      throw error;
     }
   }
 

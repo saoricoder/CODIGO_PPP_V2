@@ -23,8 +23,21 @@ const AuditoriaSchema = {
   id_auditoria: {
     allowNull: false,
     primaryKey: true,
-    type: DataTypes.BIGINT,
+    type: DataTypes.INTEGER,
     autoIncrement: true,
+  },
+  fecha: {
+    type: DataTypes.DATEONLY,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
+  hora_ingreso: {
+    type: DataTypes.TIME,
+    allowNull: false
+  },
+  hora_salida: {
+    type: DataTypes.TIME,
+    allowNull: false
   },
   id_usuario: {
     allowNull: true,
@@ -52,6 +65,8 @@ const AuditoriaSchema = {
           "Consultar",
           "Desactivar",
           "DESCARGAR",
+          "Cerrar Sesión",
+          "Iniciar Sesión",
         ],
       ], // Restricción de valores posibles
     },

@@ -85,6 +85,12 @@ const swaggerDefinitions = {
             type: "string",
             description: "detalle de metodo SQL realizado INSERT INTO",
           },
+          fecha: { // New field added
+            type: "string",
+            format: "date-time",
+            description: "Fecha y hora de la operación",
+          },
+          required: ["id_usuario", "modulo", "operacion", "detalle", "fecha"], // Ensure required fields are listed
         },
       },
       Atencion: {
@@ -368,28 +374,40 @@ const swaggerDefinitions = {
           },
         },
       },
-      post: {
-        summary: "Registra una nueva auditoría",
-        tags: ["Auditorías"],
-        requestBody: {
-          required: true,
+
+    post: {
+      summary: "Registra una nueva auditoría",
+      tags: ["Auditorías"],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                id_usuario: { type: "string", description: "ID del usuario" },
+                modulo: { type: "string", description: "Módulo de operación" },
+                operacion: { type: "string", description: "Operación realizada" },
+                detalle: { type: "string", description: "Detalle de la operación" },
+                fecha: { type: "string", format: "date-time", description: "Fecha de la operación" }
+              },
+              required: ["id_usuario", "modulo", "operacion", "detalle", "fecha"]
+            }
+          }
+        }
+      },
+      responses: {
+        201: {
+          description: "Auditoría registrada exitosamente",
           content: {
             "application/json": {
-              schema: { $ref: "#/components/schemas/Auditoria" },
-            },
-          },
-        },
-        responses: {
-          201: {
-            description: "Auditoría registrada exitosamente",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Auditoria" },
-              },
-            },
-          },
-        },
-      },
+              schema: { $ref: "#/components/schemas/Auditoria" }
+            }
+          }
+        }
+      }
+    },
+
     },
     "/api/fcc/auditoria/{id}": {
       get: {

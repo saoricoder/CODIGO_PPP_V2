@@ -12,6 +12,8 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { createExamen, updateExamen } from '../../../services/examenServices';
+// Add import
+import { createAuditoria, detalle_data } from "../../../services/auditoriaServices";
 
 const StyledModal = styled(Modal)(({ theme }) => ({
   display: 'flex',
@@ -68,26 +70,40 @@ const ExamenModal = ({ open, onClose, examen, onSave, selectedPaciente }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('id_historia', selectedPaciente);
+      const formDataObj = new FormData();
+      formDataObj.append('id_historia', selectedPaciente);
       Object.keys(formData).forEach(key => {
-        formDataToSend.append(key, formData[key]);
+        formDataObj.append(key, formData[key]);
       });
       if (file) {
-        formDataToSend.append('archivo_examen', file);
+        formDataObj.append('archivo_examen', file);
       }
 
       if (examen) {
-        await updateExamen(examen.id_examen, formDataToSend);
+        await updateExamen(examen.id_examen, formDataObj);
+        // Add audit for update
+        const data_auditoria = {
+          id_usuario: selectedPaciente,
+          modulo: "Exámenes",
+          operacion: "Update",
+          detalle: detalle_data(formData).updateSql
+        };
+        await createAuditoria(data_auditoria);
       } else {
-        await createExamen(formDataToSend);
+        await createExamen(formDataObj);
+        // Add audit for create
+        const data_auditoria = {
+          id_usuario: selectedPaciente,
+          modulo: "Exámenes",
+          operacion: "Crear",
+          detalle: detalle_data(formData).insertSql
+        };
+        await createAuditoria(data_auditoria);
       }
-
       onSave();
       onClose();
     } catch (error) {
-      console.error('Error al guardar el examen:', error);
-      // Aquí podrías manejar el error, por ejemplo mostrando un mensaje al usuario
+      console.error('Error:', error);
     }
   };
 

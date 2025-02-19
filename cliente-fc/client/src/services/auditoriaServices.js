@@ -3,11 +3,20 @@ import { API_URL } from "./apiConfig";
 
 export const createAuditoria = async (data = {}) => {
   try {
-    const response = await axios.post(`${API_URL}/auditoria`, data);
-    console.log("creando auditoria");
+    // Formatear las fechas antes de enviar
+    const currentDate = new Date();
+    const formattedData = {
+      ...data,
+      fecha: currentDate.toISOString().split('T')[0], // YYYY-MM-DD
+      hora_ingreso: currentDate.toTimeString().split(' ')[0], // HH:MM:SS
+      hora_salida: currentDate.toTimeString().split(' ')[0]  // HH:MM:SS
+    };
+
+    console.log("Data being sent to auditoria:", formattedData);
+    const response = await axios.post(`${API_URL}/auditoria`, formattedData);
     return response.data;
   } catch (error) {
-    console.log("Error create auditorias", error);
+    console.error("Error creating auditoria:", error.response ? error.response.data : error.message);
     throw error;
   }
 };

@@ -4,19 +4,19 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const verifyToken = async (req, res, next) => {
-  const token = req.headers["token"];
+  const token = req.headers["token"]; // Ensure the header key matches the client-side
   const secret = process.env.JWT_SECRET;
   if (token) {
-    jwt.verify(token, secret
-    , (error, data) => {
-      if (error) return res.status(400).json({ mensaje: "Token invalido" });
-      else {
+    jwt.verify(token, secret, (error, data) => {
+      if (error) {
+        return res.status(401).json({ mensaje: "Token inválido" }); // Use 401 for unauthorized
+      } else {
         req.user = data;
         next();
       }
     });
   } else {
-    res.status(400).json({ mensaje: "Verificacion Token erronea, Debes enviar un token" });
+    res.status(400).json({ mensaje: "Verificación de token errónea, debes enviar un token" });
   }
 };
 

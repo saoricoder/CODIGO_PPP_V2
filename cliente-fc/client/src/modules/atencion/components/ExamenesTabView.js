@@ -24,6 +24,8 @@ import { getExamenByHistoria, deleteExamen, updateExamen } from '../../../servic
 import { usePacienteContext } from '../../../components/base/PacienteContext';
 import { API_IMAGE_URL } from "../../../services/apiConfig";
 import ExamenModal from './ExamenModal'; // Asumimos que crearás este componente
+// Add import
+import { createAuditoria, detalle_data } from "../../../services/auditoriaServices";
 
 const ExamenesTabView = () => {
   const { selectedPaciente } = usePacienteContext();
@@ -67,13 +69,19 @@ const ExamenesTabView = () => {
   const handleDeleteExamen = async (id) => {
     try {
       await deleteExamen(id);
+      // Add audit
+      const data_auditoria = {
+        id_usuario: selectedPaciente,
+        modulo: "Exámenes",
+        operacion: "Eliminar",
+        detalle: detalle_data({ id_examen: id }).deleteSql
+      };
+      await createAuditoria(data_auditoria);
       fetchExamenes();
     } catch (error) {
       console.error('Error deleting examen:', error);
-      setError("Error al eliminar el examen. Por favor, intente nuevamente.");
     }
   };
-
   const handleUpdateExamenStatus = async (id, newStatus) => {
     try {
       await updateExamen(id, { estado_examen: newStatus });
