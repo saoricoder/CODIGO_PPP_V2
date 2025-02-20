@@ -13,6 +13,7 @@ import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices
 import BuscarPersonal from '../components/buscarPersonal';
 import ModalAddPersonalSalud from '../components/modalAddPersonal';
 import ModalEditPersonalSalud from '../components/modalEditPersonal';
+import { getCurrentUserId } from "../../../utils/userUtils";
 
 const PersonalSalud = () => {
   const [personalsaluds, setPersonalSalud] = useState([]);
@@ -82,22 +83,28 @@ const PersonalSalud = () => {
 
   const handleCompleteDelete = async () => {
     const id = idPersonal;
-    await deleteLogicalPersonalSalud(id);
-    fetchPersonalSalud();
-    handleAlertClose();
-    // Registrar auditoría de eliminación
     try {
       const personal = await getPersonalSaludId(id);
-      let data_auditoria = {};
-      data_auditoria.id_usuario = personal.id_personalsalud; // ID del usuario que realiza la acción
-      data_auditoria.modulo = "Personal Salud"; // Módulo
-      data_auditoria.operacion = "Eliminar"; // Operación
+      await deleteLogicalPersonalSalud(id);
       
-      data_auditoria.detalle = detalle_data(personal).insertSql;
+      const userId = getCurrentUserId();
+      // Audit record
+      const data_auditoria = {
+        id_usuario: userId, // Using logged-in user ID
+        modulo: "Personal Salud",
+        operacion: "ELIMINAR",
+        detalle: detalle_data({
+          ...personal,
+          tabla: "personal_salud",
+          id: personal.id_personalsalud
+        }).deleteSql
+      };
+      
       await createAuditoria(data_auditoria);
-
+      fetchPersonalSalud();
+      handleAlertClose();
     } catch (error) {
-      console.error("Error al registrar auditoría:", error);
+      console.error("Error al eliminar personal o crear auditoría:", error);
     }
   };
 

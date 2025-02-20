@@ -29,6 +29,7 @@ import { tipoIdentificacion, paises } from "../../../components/data/Data";
 import dayjs from "dayjs";
 //import { createAtencion } from "../../../services/atencion";
 import { createAuditoria,detalle_data } from "../../../services/auditoriaServices";
+import { getCurrentUserId } from "../../../utils/userUtils";
 
 const steps = [
   "Información Personal",
@@ -178,12 +179,10 @@ const ModalAddPersonalSalud = ({ open, onClose, onPersonalSaludAdded }) => {
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
-
   const handleSave = async () => {
     if (!validateFields()) return;
   
     setIsSubmitting(true);
-
     const formData = new FormData();
   
     // Agregar datos del personal de salud al FormData
@@ -209,44 +208,29 @@ const ModalAddPersonalSalud = ({ open, onClose, onPersonalSaludAdded }) => {
       const response = await createPersonalSalud(formData);
   
       if (response && response.success === true) {
-        // Notificar que se ha añadido un nuevo personal de salud
+        const userId = getCurrentUserId();
+        // Create audit record
+        const data_auditoria = {
+          id_usuario: userId, // Using logged-in user ID instead of created record ID
+          modulo: "Personal Salud",
+          operacion: "CREAR",
+          detalle: detalle_data({
+            ...response.data,
+            tabla: "personal_salud",
+            id: response.data.id_personalsalud
+          }).insertSql
+        };
+        
+        await createAuditoria(data_auditoria);
         onPersonalSaludAdded(true);
-  
-        // Registrar auditoría
-        try {
-          let data_auditoria = {};
-          data_auditoria.id_usuario = response.id_personalsalud; 
-          data_auditoria.modulo = "Personal Salud"; 
-          data_auditoria.operacion = "CREAR";
-          const dataForAudit={
-            ...personalSalud,
-            tabla:"personal_salud",
-            id:response.id_personalsalud,
-          };
-          data_auditoria.detalle = detalle_data(dataForAudit).insertSql;
-  
-          await createAuditoria(data_auditoria); 
-          console.log("Auditoría registrada:", data_auditoria);
-        } catch (error) {
-          console.error("Error al registrar auditoría:", error);
-        }
-  
-        // Cerrar el modal
         onClose();
-      } else {
-        throw new Error("La respuesta del servidor no indica éxito");
       }
     } catch (error) {
-      console.error("Error al guardar el personal de salud:", error);
-      setAlertMessage(
-        "Error al guardar el personal de salud. Por favor, intente nuevamente."
-      );
+      console.error("Error:", error);
+      setAlertMessage("Error al guardar. Por favor, intente nuevamente.");
       setShowAlert(true);
-    } finally {
-      setIsSubmitting(false);
     }
   };
-
   const renderStepContent = (step) => {
     switch (step) {
       case 0:

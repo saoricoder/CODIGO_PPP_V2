@@ -15,7 +15,7 @@ import { DateInput, TextInput, PhoneInput, AutocompleteInput, FileInput, Textare
 import {matchIsValidTel}  from "mui-tel-input";
 import {steps, tipoIdentificacion, tiposSangre, genderOptions, parentescos, paises} from '../../../components/data/Data';
 import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
-
+import {getCurrentUserId} from "../../../utils/userUtils";
 import "dayjs/locale/en-gb";
 
 
@@ -251,14 +251,11 @@ const ModalAddPaciente = ({ open, onClose, onPacienteAdded }) => {
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
-
   const handleSave = async () => {
-
     if (!validateFields()) return;
-  
     setIsSubmitting(true);
     const formData = new FormData();
-  
+    
     // Agregar campos de texto al FormData
     Object.keys(paciente).forEach(key => {
       if (key !== 'imagen' && key !== 'archivo_documentos_cedulas' && key !== 'archivo_certificado_medico') {
@@ -291,24 +288,29 @@ const ModalAddPaciente = ({ open, onClose, onPacienteAdded }) => {
         console.log('Paciente guardado con éxito:', response.data);
 
         try {
-                // Verificar el id_usuario antes de crear la auditoría
-                console.log('ID del usuario para auditoría:', response.data.id_usuario);
+          const userId = getCurrentUserId(); // Use the existing utility function
+          if (!userId) {
+            console.error('No user ID found');
+            return;
+          }
 
-                // Creación de auditoría
-                let data_auditoria = {};
-                data_auditoria.id_usuario = response.data.id_usuario; // Asegúrate de que este ID sea correcto
-                data_auditoria.modulo = "Paciente";
-                data_auditoria.operacion = "Crear";
-                data_auditoria.detalle = detalle_data({
-                    ...response.data,
-                    tabla: "paciente" // Asegúrate de incluir el nombre de la tabla aquí
-                }).insertSql;
-                
-                await createAuditoria(data_auditoria);
-                console.log('Auditoría creada con éxito:');
-        }catch(error){
-          console.log('Error al crear auditoría:', error);
+          const data_auditoria = {
+            id_usuario: userId,
+            modulo: "Pacientes",
+            operacion: "CREATE",
+            detalle: detalle_data({
+              ...response.data,
+              fecha_operacion: new Date().toISOString()
+            }, 'fcc_paciente.paciente').insertSql,
+            fecha: dayjs().format('YYYY-MM-DD')
+          };
+          
+          await createAuditoria(data_auditoria);
+          console.log('Auditoría creada con éxito');
+        } catch (error) {
+          console.error('Error al crear auditoría:', error);
         }
+
         onPacienteAdded(true);
         handleClose();
       } else {
@@ -323,7 +325,6 @@ const ModalAddPaciente = ({ open, onClose, onPacienteAdded }) => {
       setIsSubmitting(false);
     }
   };
-
   const renderStepContent = (step) => {
     switch (step) {
       case 0:
