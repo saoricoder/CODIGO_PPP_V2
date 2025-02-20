@@ -5,6 +5,7 @@ import Drawer from "../../../components/Drawer";
 import CuadroPaciente from "../../atencion/components/CuadroPaciente";
 import { getPaciente } from "../../../services/pacientesServices";
 import { getHistoria } from "../../../services/historiaServices";
+import { createAuditoria, detalle_data } from '../../../services/auditoriaServices';
 import ButtonAdd from "../components/AddButton";
 import CuadroHistorialClinico from "../components/CuadroHistorialClinico";
 import { usePacienteContext } from "../../../components/base/PacienteContext";
@@ -24,9 +25,22 @@ const Historia = () => {
         setLoading(true);
         try {
             const historiaData = await getHistoria(pacienteId);
-            console.log("Historia:", historiaData);
+            const user = JSON.parse(localStorage.getItem("user"));
+            
+            // Audit for viewing clinical history
+            await createAuditoria({
+              id_usuario: user.id_usuario,
+              modulo: "Historia Clínica",
+              operacion: "Consultar",
+              detalle: detalle_data({
+                id_paciente: pacienteId,
+                fecha_consulta: new Date().toISOString(),
+                tipo_operacion: 'read'
+              }, 'fcc_historia.historia').selectSql
+            });
+            
             setHistoria(historiaData);
-            setIsNewHistory(!historiaData.motivo_consulta_historia );
+            setIsNewHistory(!historiaData.motivo_consulta_historia);
         } catch (error) {
             console.error("Error al obtener la historia clínica:", error);
         } finally {

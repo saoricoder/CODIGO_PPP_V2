@@ -5,6 +5,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AntecedentesFamiliares from './AntecedentesFamiliares';
 import AntecedentesPersonales from './AntecedentesPersonales';
+import { createAuditoria, detalle_data } from '../../../services/auditoriaServices';
 
 const AddModalHistoria = ({ open, onClose, historiaId, onHistoriaUpdated, setIsNewHistory, isNewHistory}) => {
   const [activeStep, setActiveStep] = useState(0);
@@ -209,38 +210,48 @@ const AddModalHistoria = ({ open, onClose, historiaId, onHistoriaUpdated, setIsN
     }));
   };
 
-  const handleSave = async () => {
+  const handleSubmit = async () => {
     try {
-      const formData = new FormData();
-      Object.keys(historia).forEach(key => {
-        if (typeof historia[key] === 'object' && historia[key] !== null) {
-          // For objects (including arrays), stringify the value
-          formData.append(key, JSON.stringify(historia[key]));
-        } else {
-          // For primitive values, send as is
-          formData.append(key, historia[key] || '');
-        }
-      });
-  
-      console.log('FormData contents:');
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
-  
-      if (historiaId) {
-        await updateHistoria(historiaId, formData);
+      const user = JSON.parse(localStorage.getItem("user"));
+      const operationTime = new Date().toISOString();
+      const isNew = !historia.id_historia;
+
+      // Format the historia data
+      const historiaData = {
+        ...historia,
+        id_paciente: historiaId,
+        fecha_actualizacion: operationTime,
+        medicamentos: Array.isArray(historia.medicamentos) ? historia.medicamentos : [],
+        alergias: Array.isArray(historia.alergias) ? historia.alergias : [],
+        tratamientos_recibidos: Array.isArray(historia.tratamientos_recibidos) ? historia.tratamientos_recibidos : []
+      };
+
+      // Create or update historia
+      if (isNew) {
+        await createHistoria(historiaData);
       } else {
-        await createHistoria(formData);
+        await updateHistoria(historiaId, historiaData);
       }
-      if (onHistoriaUpdated) onHistoriaUpdated();
+
+      // Create audit record with correct operation type
+      await createAuditoria({
+        id_usuario: user.id_usuario,
+        modulo: "Historia Clínica",
+        operacion: isNew ? "CREATE" : "UPDATE", // Changed to match expected values
+        detalle: detalle_data({
+          id_paciente: historiaId,
+          fecha_operacion: operationTime,
+          tipo_operacion: isNew ? 'create' : 'update',
+          detalles: JSON.stringify(historiaData)
+        }, 'fcc_historia.historia')[isNew ? 'insertSql' : 'updateSql']
+      });
+
+      onHistoriaUpdated();
       onClose();
     } catch (error) {
-      console.error('Error saving historia:', error);
-      alert('Error guardando los datos');
+      console.error('Error:', error);
     }
   };
-
-
   const renderStepContent = (step) => {
     switch (step) {
       case 0:
@@ -378,7 +389,7 @@ const AddModalHistoria = ({ open, onClose, historiaId, onHistoriaUpdated, setIsN
           Atrás
         </Button>
         {activeStep === steps.length - 1 ? (
-          <Button onClick={handleSave} variant="contained" color="primary">
+          <Button onClick={handleSubmit} variant="contained" color="primary">
             {isNewHistory ? 'Registrar' : 'Guardar'}
           </Button>
         ) : (

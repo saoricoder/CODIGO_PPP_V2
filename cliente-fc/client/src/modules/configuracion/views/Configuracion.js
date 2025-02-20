@@ -23,6 +23,7 @@ import {
 } from "@mui/icons-material";
 import Drawer from "../../../components/Drawer";
 import NavbarAdmin from "../../../components/NavbarAdmin";
+import { createAuditoria, detalle_data } from '../../../services/auditoriaServices';
 
 const Configuracion = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -34,13 +35,51 @@ const Configuracion = () => {
   };
 
   const handleDeleteAccount = async () => {
-    // Implementar lógica para eliminar cuenta
-    setOpenDeleteDialog(false);
+    try {
+      // Implementar lógica para eliminar cuenta
+      const user = JSON.parse(localStorage.getItem("user"));
+      const deleteTime = new Date().toISOString();
+      
+      let data_auditoria = {
+        id_usuario: user.id_usuario,
+        modulo: "Configuración",
+        operacion: "Eliminar Cuenta",
+        detalle: detalle_data({
+          id_usuario: user.id_usuario,
+          fecha_operacion: deleteTime,
+          tipo_operacion: 'delete_account'
+        }, 'fcc_auth.usuarios').deleteSql
+      };
+      await createAuditoria(data_auditoria);
+      console.log('Auditoría de eliminación de cuenta creada con éxito');
+      setOpenDeleteDialog(false);
+    } catch (error) {
+      console.error('Error al crear auditoría de eliminación de cuenta:', error);
+    }
   };
 
   const handleChangePassword = async () => {
-    // Implementar lógica para cambiar contraseña
-    setOpenPasswordDialog(false);
+    try {
+      // Implementar lógica para cambiar contraseña
+      const user = JSON.parse(localStorage.getItem("user"));
+      const updateTime = new Date().toISOString();
+      
+      let data_auditoria = {
+        id_usuario: user.id_usuario,
+        modulo: "Configuración",
+        operacion: "Cambiar Contraseña",
+        detalle: detalle_data({
+          id_usuario: user.id_usuario,
+          fecha_operacion: updateTime,
+          tipo_operacion: 'update_password'
+        }, 'fcc_auth.usuarios').updateSql
+      };
+      await createAuditoria(data_auditoria);
+      console.log('Auditoría de cambio de contraseña creada con éxito');
+      setOpenPasswordDialog(false);
+    } catch (error) {
+      console.error('Error al crear auditoría de cambio de contraseña:', error);
+    }
   };
 
   const configOptions = [
