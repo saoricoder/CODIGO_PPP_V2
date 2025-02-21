@@ -71,6 +71,7 @@ const AuditoriaSchema = {
           "Eliminar Cuenta",
           "ACTIVAR" ,
            "DESACTIVAR",
+           "Buscar",
         ],
       ], // Restricción de valores posibles
     },

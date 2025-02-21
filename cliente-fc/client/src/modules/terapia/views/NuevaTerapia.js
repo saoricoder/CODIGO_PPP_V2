@@ -37,6 +37,7 @@ import { getPaciente } from '../../../services/pacientesServices';
 import { createTerapia, getTerapiaByPaciente, getLastTerapia } from '../../../services/terapia';
 import { getHistoria, getHistoriaFile } from '../../../services/historiaServices';
 import { createAuditoria, detalle_data } from "../../../services/auditoriaServices";
+import { getCurrentUserId } from "../../../utils/userUtils";
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
   display: 'flex',
@@ -360,68 +361,56 @@ const SistemaTerapias = () => {
 
   const handleNext = () => setStep((prevStep) => prevStep + 1);
   const handleBack = () => setStep((prevStep) => prevStep - 1);
-
   const handleSubmit = async () => {
-    const formData = new FormData();
-    formData.append('notas_evolucion', notasTratamiento);
-    formData.append('id_tipo_terapia', selectedTherapy === 'fisica' ? 1 : selectedTherapy === 'ocupacional' ? 2 : 3);
-    formData.append('id_personalsalud', 1); // Temporary value as mentioned
-    formData.append('id_historia', id);
-    formData.append('fecha_hora', new Date().toISOString());
-    formData.append('farmacoterapia_indicaciones', medicacion);
-    
-    if (file) {
-      formData.append('archivo_terapia', file);
-    }
-  
     try {
-      const response = await createTerapia(formData);
-      console.log('Terapia guardada exitosamente');
-
-      // Registrar auditoría de creación
-      try {
-        const dataForAudit = {
-          ...response, // Datos de la terapia creada
-          tabla: "terapias", // Nombre de la tabla en la base de datos
-          id: response.id_personalsalud, // ID del registro creado
-        };
-
-        const data_auditoria = {
-          id_usuario: response.id_personalsalud, // ID del usuario que realiza la acción
-          modulo: "Terapias", // Módulo en el que se realiza la acción
-          operacion: "CREAR", // Operación realizada
-          detalle: detalle_data(dataForAudit).insertSql, // Script SQL de inserción
-        };
-
-        await createAuditoria(data_auditoria); // Registrar la auditoría
-        console.log("Auditoría de creación registrada:", data_auditoria);
-      } catch (error) {
-        console.error("Error al registrar auditoría de creación:", error);
+      const loggedInUser = JSON.parse(localStorage.getItem('user'));
+      if (!loggedInUser) {
+        throw new Error('Usuario no autenticado');
       }
-
+      
+      const formData = new FormData();
+      formData.append('notas_evolucion', notasTratamiento);
+      formData.append('id_tipo_terapia', selectedTherapy === 'fisica' ? 1 : selectedTherapy === 'ocupacional' ? 2 : 3);
+      formData.append('id_personalsalud', loggedInUser.id_usuario);
+      formData.append('id_historia', id);
+      formData.append('fecha_hora', new Date().toISOString());
+      formData.append('farmacoterapia_indicaciones', medicacion);
+      
+      if (file) {
+        formData.append('archivo_terapia', file);
+      }
+    
+      const response = await createTerapia(formData);
+      const auditData = {
+        id_usuario: loggedInUser.id_usuario,
+        modulo: "Terapias",
+        operacion: "Crear",
+        detalle: detalle_data({
+          tabla: "terapia",
+          datos: response.data,
+          schema: "fcc_historiaclinica",
+          id_registro: response.data.id_terapia
+        }).insertSql
+      };
+      
+      await createAuditoria(auditData);
       navigate('/Fcc-terapias');
     } catch (error) {
       console.error('Error al guardar la terapia:', error);
-      // Aquí puedes mostrar un mensaje de error al usuario
     }
   };
-
-
   const handleCancel = () => {
     navigate('/Fcc-terapias');
   };
-
   const contentVariants = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
     exit: { opacity: 0, y: -20 },
   };
-
   const getCurrentDateTime = () => {
     const now = new Date();
     return `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
   };
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'background.default' }}>
       <AppBar position="static" elevation={0} color="primary">

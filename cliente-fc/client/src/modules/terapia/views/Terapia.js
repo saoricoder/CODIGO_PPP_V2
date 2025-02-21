@@ -11,7 +11,7 @@ import TerapiasTabs from '../components/TerapiasTabs';
 import TerapiasAnteriores from '../components/TerapiasAnteriores';
 import AsistenciaTerapias from '../components/AsistenciaTerapias';
 import { getPaciente } from '../../../services/pacientesServices';
-//import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
+
 export default function Terapias() {
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -128,7 +128,7 @@ export default function Terapias() {
             {!selectedPaciente ? (
               <Box sx={{ p: 3, textAlign: 'center' }}>
                 <Alert severity="info" sx={{ mt: 2 }}>
-                  Seleccione Paciente para ver información
+                  Seleccione Paciente para ver información
                 </Alert>
               </Box>
             ) : loadingPacienteData ? (

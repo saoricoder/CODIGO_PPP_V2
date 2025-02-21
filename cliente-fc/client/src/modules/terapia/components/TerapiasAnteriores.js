@@ -11,19 +11,19 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import PdfGeneratorTerapias from '../../../components/PdfGeneratorTerapias';
 import { API_IMAGE_URL } from "../../../services/apiConfig";
-import TerapiaDetailsDialog from './TerapiaDetailsDialog'; // Asegúrate de que la ruta sea correcta
-import { createAuditoria, detalle_data } from "../../../services/auditoriaServices";
+import TerapiaDetailsDialog from './TerapiaDetailsDialog'; // Asegúrate de que la ruta sea correcta
+
 const tiposTerapia = [
   { id: 'all', name: 'Todas las Terapias' },
   { id: '1', name: 'Terapia de Lenguaje' },
-  { id: '2', name: 'Terapia Física' },
+  { id: '2', name: 'Terapia Física' },
   { id: '3', name: 'Terapia Ocupacional' },
 ];
 
 const dateRangeOptions = [
-  { id: '7d', name: 'Últimos 7 días' },
-  { id: '2w', name: 'Últimas 2 semanas' },
-  { id: '1m', name: 'Último mes' },
+  { id: '7d', name: 'Últimos 7 días' },
+  { id: '2w', name: 'Últimas 2 semanas' },
+  { id: '1m', name: 'Último mes' },
   { id: 'custom', name: 'Rango personalizado' },
 ];
 
@@ -112,28 +112,6 @@ const TerapiasAnteriores = ({ terapias, tipoTerapia, handleChangeTipoTerapia, ha
         setFilteredTerapias(prevTerapias => 
           prevTerapias.map(t => t.id_terapia === updatedTerapia.id_terapia ? updatedTerapia : t)
         );
-
-        // Registrar auditoría de actualización
-        try {
-          const dataForAudit = {
-            ...updatedTerapia,
-            tabla: "terapias2", // Nombre de la tabla en la base de datos
-            id: updatedTerapia.id_terapia, // ID del registro actualizado
-          };
-
-          const data_auditoria = {
-            id_usuario: updatedTerapia.id_usuario, // ID del usuario que realiza la acción
-            modulo: "Terapias", // Módulo en el que se realiza la acción
-            operacion: "ACTUALIZAR", // Operación realizada
-            detalle: detalle_data(dataForAudit).updateSql, // Script SQL de actualización
-          };
-
-          await createAuditoria(data_auditoria); // Registrar la auditoría
-          console.log("Auditoría de actualización registrada:", data_auditoria);
-        } catch (error) {
-          console.error("Error al registrar auditoría de actualización:", error);
-        }
-
         handleCloseModal();
       } catch (error) {
         console.error("Error updating terapia:", error);
@@ -144,36 +122,10 @@ const TerapiasAnteriores = ({ terapias, tipoTerapia, handleChangeTipoTerapia, ha
 
   const handleConfirmDelete = async () => {
     if (terapiaToDelete) {
-      try {
-        await handleDeleteTerapia(terapiaToDelete.id_terapia);
-
-        // Registrar auditoría de eliminación
-        try {
-          const dataForAudit = {
-            ...terapiaToDelete,
-            tabla: "terapias", // Nombre de la tabla en la base de datos
-            id: terapiaToDelete.id_terapia, // ID del registro eliminado
-          };
-
-          const data_auditoria = {
-            id_usuario: terapiaToDelete.id_usuario, // ID del usuario que realiza la acción
-            modulo: "Terapias", // Módulo en el que se realiza la acción
-            operacion: "ELIMINAR", // Operación realizada
-            detalle: detalle_data(dataForAudit).deleteSql, // Script SQL de eliminación
-          };
-
-          await createAuditoria(data_auditoria); // Registrar la auditoría
-          console.log("Auditoría de eliminación registrada:", data_auditoria);
-        } catch (error) {
-          console.error("Error al registrar auditoría de eliminación:", error);
-        }
-
-        handleCloseDeleteDialog();
-        // Actualiza la lista de terapias después de eliminar
-        setFilteredTerapias(prevTerapias => prevTerapias.filter(t => t.id_terapia !== terapiaToDelete.id_terapia));
-      } catch (error) {
-        console.error("Error deleting terapia:", error);
-      }
+      await handleDeleteTerapia(terapiaToDelete.id_terapia);
+      handleCloseDeleteDialog();
+      // Actualiza la lista de terapias después de eliminar
+      setFilteredTerapias(prevTerapias => prevTerapias.filter(t => t.id_terapia !== terapiaToDelete.id_terapia));
     }
   };
 
@@ -256,7 +208,7 @@ const TerapiasAnteriores = ({ terapias, tipoTerapia, handleChangeTipoTerapia, ha
 
       {filteredTerapias.length === 0 ? (
         <Alert severity="info" sx={{ mt: 2 }}>
-          No hay terapias {tipoTerapia !== 'all' ? `de tipo ${tiposTerapia.find(t => t.id === tipoTerapia)?.name}` : ''} registradas para este paciente en el rango de fechas seleccionado.
+          No hay terapias {tipoTerapia !== 'all' ? de tipo ${tiposTerapia.find(t => t.id === tipoTerapia)?.name} : ''} registradas para este paciente en el rango de fechas seleccionado.
         </Alert>
       ) : (
         <>
@@ -277,7 +229,7 @@ const TerapiasAnteriores = ({ terapias, tipoTerapia, handleChangeTipoTerapia, ha
             <TableCell>{terapia.notas_evolucion}</TableCell>
             <TableCell>{dayjs(terapia.fecha_hora).format('DD/MM/YYYY HH:mm')}</TableCell>
             <TableCell>
-              <Button variant="outlined" size="small" onClick={() => handleOpenModal(terapia)} sx={{ mr: 1 }}>Ver más</Button>
+              <Button variant="outlined" size="small" onClick={() => handleOpenModal(terapia)} sx={{ mr: 1 }}>Ver más</Button>
             </TableCell>
           </TableRow>
         ))}
@@ -311,10 +263,10 @@ const TerapiasAnteriores = ({ terapias, tipoTerapia, handleChangeTipoTerapia, ha
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">{"¿Estás seguro de que quieres eliminar esta terapia?"}</DialogTitle>
+        <DialogTitle id="alert-dialog-title">{"¿Estás seguro de que quieres eliminar esta terapia?"}</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Esta acción no se puede deshacer. ¿Deseas continuar?
+            Esta acción no se puede deshacer. ¿Deseas continuar?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
