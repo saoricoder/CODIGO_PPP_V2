@@ -212,44 +212,67 @@ const AddModalHistoria = ({ open, onClose, historiaId, onHistoriaUpdated, setIsN
 
   const handleSubmit = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const operationTime = new Date().toISOString();
-      const isNew = !historia.id_historia;
-
-      // Format the historia data
-      const historiaData = {
-        ...historia,
-        id_paciente: historiaId,
-        fecha_actualizacion: operationTime,
-        medicamentos: Array.isArray(historia.medicamentos) ? historia.medicamentos : [],
-        alergias: Array.isArray(historia.alergias) ? historia.alergias : [],
-        tratamientos_recibidos: Array.isArray(historia.tratamientos_recibidos) ? historia.tratamientos_recibidos : []
-      };
-
-      // Create or update historia
-      if (isNew) {
-        await createHistoria(historiaData);
-      } else {
-        await updateHistoria(historiaId, historiaData);
+      setIsSubmitting(true);
+      const userId = getCurrentUserId();
+      if (!userId) {
+        throw new Error('Usuario no autenticado');
       }
-
-      // Create audit record with correct operation type
-      await createAuditoria({
-        id_usuario: user.id_usuario,
-        modulo: "Historia Clínica",
-        operacion: isNew ? "CREATE" : "UPDATE", // Changed to match expected values
-        detalle: detalle_data({
-          id_paciente: historiaId,
-          fecha_operacion: operationTime,
-          tipo_operacion: isNew ? 'create' : 'update',
-          detalles: JSON.stringify(historiaData)
-        }, 'fcc_historia.historia')[isNew ? 'insertSql' : 'updateSql']
+  
+      const formData = new FormData();
+  
+      // Añadir campos no relacionados con archivos
+      Object.keys(paciente).forEach(key => {
+        if (!['imagen', 'archivo_documentos_cedulas', 'archivo_certificado_medico'].includes(key)) {
+          formData.append(key, paciente[key]);
+        }
       });
-
-      onHistoriaUpdated();
+  
+      // Manejar archivos
+      if (paciente.imagen instanceof File) {
+        formData.append('imagen', paciente.imagen);
+      }
+      if (paciente.imagen === null) {
+        formData.append('imagen', null);
+      }
+      if (paciente.archivo_documentos_cedulas instanceof File) {
+        formData.append('archivo_documentos_cedulas', paciente.archivo_documentos_cedulas);
+      }
+      if (paciente.archivo_documentos_cedulas === null) {
+        formData.append('archivo_documentos_cedulas', null);
+      }
+      if (paciente.archivo_certificado_medico instanceof File) {
+        formData.append('archivo_certificado_medico', paciente.archivo_certificado_medico);
+      }
+      if (paciente.archivo_certificado_medico === null) {
+        formData.append('archivo_certificado_medico', null);
+      }
+  
+      console.log('Paciente a guardar:', paciente);
+      console.log(paciente.imagen);
+  
+      const updatedPaciente = await updatePaciente(paciente.id_paciente, formData);
+  
+      // Crear registro de auditoría
+      const data_auditoria = {
+        id_usuario: userId,
+        modulo: "Pacientes",
+        operacion: "ACTUALIZAR",
+        detalle: detalle_data({
+          ...paciente,
+          id: paciente.id_paciente
+        }, "fcc_paciente.paciente").updateSql
+      };
+  
+      await createAuditoria(data_auditoria);
+  
+      onPacienteUpdated(true, updatedPaciente);
       onClose();
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error actualizando paciente:", error);
+      setShowAlert(true);
+      setAlertMessage("Error al actualizar el paciente");
+    } finally {
+      setIsSubmitting(false);
     }
   };
   const renderStepContent = (step) => {

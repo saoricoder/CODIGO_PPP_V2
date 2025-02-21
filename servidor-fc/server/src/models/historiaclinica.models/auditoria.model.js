@@ -69,6 +69,8 @@ const AuditoriaSchema = {
           "Iniciar Sesión",
           "Cambiar Contraseña",
           "Eliminar Cuenta",
+          "ACTIVAR" ,
+           "DESACTIVAR",
         ],
       ], // Restricción de valores posibles
     },
