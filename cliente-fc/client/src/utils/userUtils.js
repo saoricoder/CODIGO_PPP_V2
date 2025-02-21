@@ -9,6 +9,6 @@ export const getCurrentUser = () => {
 };
 
 export const getCurrentUserId = () => {
-  const user = getCurrentUser();
-  return user ? user.id_usuario : null;
+  const user = JSON.parse(localStorage.getItem('user'));
+  return user ? user.id : null;
 };
