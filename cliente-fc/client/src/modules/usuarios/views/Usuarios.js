@@ -7,7 +7,7 @@ import TablaUsuario from '../components/TablaUsuarios';
 import SearchIcon from '@mui/icons-material/Search';
 import { getUsuarios, createUsuario, updateUsuario, deleteUsuario } from '../../../services/usuarioServices'
 import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
-
+import { getCurrentUserId } from "../../../utils/userUtils";
 export default function Usuarios() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,30 +69,41 @@ export default function Usuarios() {
       if (response) {
         setUsers(users.map(u => u.id_usuario === updatedUser.id_usuario ? updatedUser : u));
 
-        // Registrar auditoría de actualización
-        try {
-          const dataForAudit = {
-            ...updatedUser,
-            tabla: "usuarios", // Nombre de la tabla en la base de datos
-            id: updatedUser.id_usuario, // ID del registro actualizado
-          };
-
-          const data_auditoria = {
-            id_usuario: updatedUser.id_usuario, // ID del usuario que realiza la acción
-            modulo: "Usuarios", // Módulo en el que se realiza la acción
-            operacion: "UPDATE", // Operación realizada
-            detalle: detalle_data(dataForAudit).updateSql, // Script SQL de actualización
-          };
-
-          await createAuditoria(data_auditoria); // Registrar la auditoría
-          console.log("Auditoría de actualización registrada:", data_auditoria);
-        } catch (error) {
-          console.error("Error al registrar auditoría de actualización:", error);
+        const loggedInUserId = getCurrentUserId();
+        if (!loggedInUserId) {
+          throw new Error('No user logged in');
         }
+
+        const detailedDescription = {
+          accion: "EDITAR",
+          tabla: 'usuarios',
+          id_registro: updatedUser.id_usuario,
+          datos_modificados: {
+            estado_anterior: users.find(u => u.id_usuario === updatedUser.id_usuario),
+            estado_nuevo: updatedUser,
+            detalles_usuario: {
+              nombre: updatedUser.nombre_usuario,
+              email: updatedUser.email_usuario,
+              rol: updatedUser.rol_usuario
+            }
+          },
+          fecha_modificacion: new Date().toISOString()
+        };
+
+        const auditData = {
+          id_usuario: loggedInUserId,
+          modulo: "Usuarios",
+          operacion: "EDITAR",
+          detalle: JSON.stringify(detailedDescription),
+          fecha: new Date().toISOString()
+        };
+
+        await createAuditoria(auditData);
       } else {
         setError('Error updating user');
       }
     } catch (err) {
+      console.error('Error updating user:', err);
       setError('Error updating user');
     }
   };
@@ -119,30 +130,41 @@ export default function Usuarios() {
       if (response) {
         setUsers(users.map(u => u.id_usuario === user.id_usuario ? updatedUser : u));
 
-        // Registrar auditoría de activación/desactivación
-        try {
-          const dataForAudit = {
-            ...updatedUser,
-            tabla: "usuarios", // Nombre de la tabla en la base de datos
-            id: updatedUser.id_usuario, // ID del registro actualizado
-          };
-
-          const data_auditoria = {
-            id_usuario: updatedUser.id_usuario, // ID del usuario que realiza la acción
-            modulo: "Usuarios", // Módulo en el que se realiza la acción
-            operacion: updatedUser.estado_usuario ? "ACTIVAR" : "DESACTIVAR", // Operación realizada
-            detalle: detalle_data(dataForAudit).updateSql, // Script SQL de actualización
-          };
-
-          await createAuditoria(data_auditoria); // Registrar la auditoría
-          console.log("Auditoría de activación/desactivación registrada:", data_auditoria);
-        } catch (error) {
-          console.error("Error al registrar auditoría de activación/desactivación:", error);
+        const loggedInUserId = getCurrentUserId();
+        if (!loggedInUserId) {
+          throw new Error('No user logged in');
         }
+
+        const detailedDescription = {
+          accion: updatedUser.estado_usuario ? "ACTIVAR" : "DESACTIVAR",
+          tabla: 'usuarios',
+          id_registro: updatedUser.id_usuario,
+          datos_modificados: {
+            estado_anterior: user,
+            estado_nuevo: updatedUser,
+            detalles_usuario: {
+              nombre: updatedUser.nombre_usuario,
+              email: updatedUser.email_usuario,
+              estado: updatedUser.estado_usuario
+            }
+          },
+          fecha_modificacion: new Date().toISOString()
+        };
+
+        const auditData = {
+          id_usuario: loggedInUserId,
+          modulo: "Usuarios",
+          operacion: updatedUser.estado_usuario ? "ACTIVAR" : "DESACTIVAR",
+          detalle: JSON.stringify(detailedDescription),
+          fecha: new Date().toISOString()
+        };
+
+        await createAuditoria(auditData);
       } else {
         setError('Error updating user status');
       }
     } catch (err) {
+      console.error('Error updating user status:', err);
       setError('Error updating user status');
     }
   };
