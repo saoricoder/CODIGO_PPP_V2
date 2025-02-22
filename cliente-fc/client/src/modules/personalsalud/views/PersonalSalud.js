@@ -9,11 +9,12 @@ import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import { getPersonalSaludId, deleteLogicalPersonalSalud, getPersonalSalud } from '../../../services/personalsaludServices';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { useState, useEffect } from 'react';
-import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
+import { createAuditoria,} from "../../../services/auditoriaServices";
+import { getCurrentUserId } from '../../../utils/userUtils';
 import BuscarPersonal from '../components/buscarPersonal';
 import ModalAddPersonalSalud from '../components/modalAddPersonal';
 import ModalEditPersonalSalud from '../components/modalEditPersonal';
-import { getCurrentUserId } from "../../../utils/userUtils";
+
 
 const PersonalSalud = () => {
   const [personalsaluds, setPersonalSalud] = useState([]);
@@ -87,20 +88,40 @@ const PersonalSalud = () => {
       const personal = await getPersonalSaludId(id);
       await deleteLogicalPersonalSalud(id);
       
-      const userId = getCurrentUserId();
-      // Audit record
-      const data_auditoria = {
-        id_usuario: userId, // Using logged-in user ID
+      const loggedInUserId = getCurrentUserId();
+      console.log('Current user ID:', loggedInUserId);
+      
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
+      }
+
+      // Create detailed audit description
+      const detailedDescription = {
+        accion: personal.estado_personal ? "DESACTIVAR" : "ACTIVAR",
+        tabla: 'personal_salud',
+        id_registro: personal.id_personalsalud,
+        datos_modificados: {
+          estado_anterior: personal.estado_personal,
+          estado_nuevo: !personal.estado_personal,
+          detalles_personal: {
+            nombre: personal.nombre_personal,
+            apellidos: personal.apellidos_personal,
+            dni: personal.dni_personal,
+            especialidad: personal.especialidad_personal
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
+      };
+
+      const auditData = {
+        id_usuario: loggedInUserId,
         modulo: "Personal Salud",
-        operacion: "ELIMINAR",
-        detalle: detalle_data({
-          ...personal,
-          tabla: "personal_salud",
-          id: personal.id_personalsalud
-        }).deleteSql
+        operacion: personal.estado_personal ? "DESACTIVAR" : "ACTIVAR",
+        detalle: JSON.stringify(detailedDescription),
+        fecha: new Date().toISOString()
       };
       
-      await createAuditoria(data_auditoria);
+      await createAuditoria(auditData);
       fetchPersonalSalud();
       handleAlertClose();
     } catch (error) {

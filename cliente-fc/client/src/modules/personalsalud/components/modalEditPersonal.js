@@ -8,7 +8,7 @@ import { updatePersonalSalud, getEspecialidades, getTipoEspecialidad } from '../
 import { TextInput, PhoneInput, AutocompleteInput, FileInput, DateInput } from '../../../components/Inputs';
 import { tipoIdentificacion,  paises } from '../../../components/data/Data';
 import dayjs from "dayjs";
-import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
+import {createAuditoria,} from "../../../services/auditoriaServices";
 import { getCurrentUserId } from "../../../utils/userUtils";
 const steps = ['Información Personal', 'Información de Contacto', 'Información Profesional'];
 
@@ -160,20 +160,40 @@ const ModalEditPersonalSalud = ({ open, onClose, personalData, onPersonalSaludUp
     try {
       const response = await updatePersonalSalud(personalSalud.id_personalsalud, formData);
       if (response) {
-        const userId = getCurrentUserId();
-        // Create audit record
-        const data_auditoria = {
-          id_usuario: userId, // Use logged-in user ID
+        const loggedInUserId = getCurrentUserId();
+        console.log('Current user ID:', loggedInUserId);
+        
+        if (!loggedInUserId) {
+          throw new Error('No user logged in');
+        }
+
+        // Create detailed audit description
+        const detailedDescription = {
+          accion: "EDITAR",
+          tabla: 'personal_salud',
+          id_registro: personalSalud.id_personalsalud,
+          datos_modificados: {
+            estado_anterior: personalData,
+            estado_nuevo: response,
+            detalles_personal: {
+              nombre: response.nombres_personal,
+              apellidos: response.apellidos_personal,
+              dni: response.dni_personal,
+              especialidad: response.id_especialidad
+            }
+          },
+          fecha_modificacion: new Date().toISOString()
+        };
+
+        const auditData = {
+          id_usuario: loggedInUserId,
           modulo: "Personal Salud",
           operacion: "EDITAR",
-          detalle: detalle_data({
-            ...response,
-            tabla: "personal_salud",
-            id: response.id_personalsalud
-          }).updateSql
+          detalle: JSON.stringify(detailedDescription),
+          fecha: new Date().toISOString()
         };
         
-        await createAuditoria(data_auditoria);
+        await createAuditoria(auditData);
         setSuccessAlert(true);
         onPersonalSaludUpdated();
         onClose();

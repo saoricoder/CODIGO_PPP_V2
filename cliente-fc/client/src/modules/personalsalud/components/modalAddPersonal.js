@@ -28,7 +28,7 @@ import {
 import { tipoIdentificacion, paises } from "../../../components/data/Data";
 import dayjs from "dayjs";
 //import { createAtencion } from "../../../services/atencion";
-import { createAuditoria,detalle_data } from "../../../services/auditoriaServices";
+import { createAuditoria,} from "../../../services/auditoriaServices";
 import { getCurrentUserId } from "../../../utils/userUtils";
 
 const steps = [
@@ -185,14 +185,12 @@ const ModalAddPersonalSalud = ({ open, onClose, onPersonalSaludAdded }) => {
     setIsSubmitting(true);
     const formData = new FormData();
   
-    // Agregar datos del personal de salud al FormData
     Object.keys(personalSalud).forEach((key) => {
       if (key !== "foto_personal" && key !== "hdv_personal") {
         formData.append(key, personalSalud[key]);
       }
     });
   
-    // Agregar archivos (foto y hoja de vida) si están presentes
     if (personalSalud.foto_personal) {
       formData.append("foto_personal", personalSalud.foto_personal);
     }
@@ -200,28 +198,46 @@ const ModalAddPersonalSalud = ({ open, onClose, onPersonalSaludAdded }) => {
       formData.append("hdv_personal", personalSalud.hdv_personal);
     }
   
-    // Agregar fecha de registro
     formData.append("fecha_registro_personal", dayjs().format("YYYY-MM-DD"));
   
     try {
-      // Crear el personal de salud
       const response = await createPersonalSalud(formData);
   
       if (response && response.success === true) {
-        const userId = getCurrentUserId();
-        // Create audit record
-        const data_auditoria = {
-          id_usuario: userId, // Using logged-in user ID instead of created record ID
+        const loggedInUserId = getCurrentUserId();
+        console.log('Current user ID:', loggedInUserId);
+        
+        if (!loggedInUserId) {
+          throw new Error('No user logged in');
+        }
+
+        // Create detailed audit description
+        const detailedDescription = {
+          accion: "CREAR",
+          tabla: 'personal_salud',
+          id_registro: response.data.id_personalsalud,
+          datos_modificados: {
+            estado_anterior: null,
+            estado_nuevo: response.data,
+            detalles_personal: {
+              nombre: response.data.nombres_personal,
+              apellidos: response.data.apellidos_personal,
+              dni: response.data.dni_personal,
+              especialidad: response.data.id_especialidad
+            }
+          },
+          fecha_modificacion: new Date().toISOString()
+        };
+
+        const auditData = {
+          id_usuario: loggedInUserId,
           modulo: "Personal Salud",
           operacion: "CREAR",
-          detalle: detalle_data({
-            ...response.data,
-            tabla: "personal_salud",
-            id: response.data.id_personalsalud
-          }).insertSql
+          detalle: JSON.stringify(detailedDescription),
+          fecha: new Date().toISOString()
         };
         
-        await createAuditoria(data_auditoria);
+        await createAuditoria(auditData);
         onPersonalSaludAdded(true);
         onClose();
       }
