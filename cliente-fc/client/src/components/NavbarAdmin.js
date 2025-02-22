@@ -33,6 +33,7 @@ import { useMenu } from './base/MenuContext';
 import { getPersonalSaludId } from '../services/personalsaludServices';
 import { API_IMAGE_URL } from '../services/apiConfig';
 import useImageCache from './global/UseImageCache';
+import { createAuditoria } from '../services/auditoriaServices';
 
 
 
@@ -94,12 +95,33 @@ function NavbarAdmin({ onDrawerToggle }) {
     setAnchorElNotifications(null);
   };
 
-  const handleMenuItemClick = (action) => {
+  const handleMenuItemClick = async (action) => {
     handleCloseUserMenu();
     switch (action) {
       case 'logout':
-        logout();
-        navigate('/');
+        try {
+          const logoutTime = new Date();
+          const ecuadorTime = new Intl.DateTimeFormat('es-EC', {
+            timeZone: 'America/Guayaquil',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          }).format(logoutTime);
+
+          await createAuditoria({
+            id_usuario: userData.id_usuario,
+            modulo: "Login",
+            operacion: "Cerrar Sesión",
+            detalle: `Usuario ${userData.id_usuario} cerró sesión a las ${ecuadorTime}`,
+            hora_salida: ecuadorTime
+          });
+
+          logout();
+          navigate('/');
+        } catch (error) {
+          console.error('Error logging out:', error);
+        }
         break;
       case 'profile':
         navigate('/perfil');
@@ -111,6 +133,39 @@ function NavbarAdmin({ onDrawerToggle }) {
         break;
     }
   };
+
+  // Add window close handler
+  useEffect(() => {
+    const handleWindowClose = async (event) => {
+      if (userData) {
+        const logoutTime = new Date();
+        const ecuadorTime = new Intl.DateTimeFormat('es-EC', {
+          timeZone: 'America/Guayaquil',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        }).format(logoutTime);
+
+        try {
+          await createAuditoria({
+            id_usuario: userData.id_usuario,
+            modulo: "Login",
+            operacion: "Cerrar Sesión",
+            detalle: `Usuario ${userData.id_usuario} cerró la ventana a las ${ecuadorTime}`,
+            hora_salida: ecuadorTime
+          });
+        } catch (error) {
+          console.error('Error creating logout audit:', error);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleWindowClose);
+    return () => {
+      window.removeEventListener('beforeunload', handleWindowClose);
+    };
+  }, [userData]);
 
   return (
     <AppBar position="fixed" color="default" elevation={0} sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
