@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Step, StepLabel, Stepper, Typography, Modal, Grid, Button, Container, Box, Alert } from "@mui/material";
 import { updatePaciente } from "../../../services/pacientesServices";
+import { createAuditoria, generateAuditData } from "../../../services/auditoriaServices";
+import { getCurrentUserId } from '../../../utils/userUtils';
 import dayjs from "dayjs";
 import { DateInput, TextInput, PhoneInput, AutocompleteInput, FileInput, TextareaInput } from '../../../components/Inputs';
 import { useMediaQuery } from "@mui/material";
 import { matchIsValidTel } from "mui-tel-input";
 import { steps, tipoIdentificacion, tiposSangre, genderOptions, parentescos, paises } from '../../../components/data/Data';
 import "dayjs/locale/en-gb";
-import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
+
 dayjs.locale("en-gb");
 
 const ModalEditPaciente = ({ open, onClose, pacienteData, onPacienteUpdated }) => {
@@ -204,8 +206,6 @@ const ModalEditPaciente = ({ open, onClose, pacienteData, onPacienteUpdated }) =
   };
 
   const handleSave = async () => {
-
-
     if (!validateFields()) return;
 
     setIsSubmitting(true);
@@ -239,34 +239,61 @@ const ModalEditPaciente = ({ open, onClose, pacienteData, onPacienteUpdated }) =
     }
     console.log('Paciente a guardar:', paciente);
     console.log(paciente.imagen);
-
+  
     try {
       const response = await updatePaciente(paciente.id_paciente, formData);
-
-      if (response) {
+      console.log('Server response:', response); // Add this debug log
+  
+      if (response?.status === 200 && response?.data) {  // Check specific status
         console.log('Paciente actualizado con éxito:', response.data);
-                try {
-                        // Creación de auditoría
-                        let data_auditoria = {};
-                        data_auditoria.id_usuario = response.data.id_paciente;
-                        data_auditoria.modulo = "Paciente1";
-                        data_auditoria.operacion = "Editar";
-                        data_auditoria.detalle = detalle_data(response.data).insertSql;
-                        
-                        await createAuditoria(data_auditoria);
-                        console.log('Auditoría creada con éxito:');
-                }catch(error){
-                  console.log('Error al crear auditoría:', error);
-                }
+        try {
+          const loggedInUserId = getCurrentUserId();
+          console.log('Current user ID:', loggedInUserId);
+          
+          if (!loggedInUserId) {
+            throw new Error('No user logged in');
+          }
+
+          // Create detailed audit description using paciente instead of response.data
+          const detailedDescription = {
+            accion: "EDITAR",
+            tabla: 'paciente',
+            id_registro: paciente.id_paciente,
+            datos_modificados: {
+              estado_anterior: pacienteData,
+              estado_nuevo: paciente,
+              detalles_paciente: {
+                nombre: paciente.nombre_paciente,
+                apellidos: paciente.apellidos_paciente,
+                dni: paciente.dni_paciente,
+                email: paciente.email_paciente
+              }
+            },
+            fecha_modificacion: new Date().toISOString()
+          };
+
+          const auditData = generateAuditData(
+            loggedInUserId,
+            "Paciente",
+            "EDITAR",
+            JSON.stringify(detailedDescription)
+          );
+
+          await createAuditoria(auditData);
+          console.log('Auditoría creada con éxito');
+        } catch(error) {
+          console.error('Error al crear auditoría:', error);
+        }
         onPacienteUpdated(true);
         handleClose();
       } else {
-        throw new Error('La respuesta del servidor no indica éxito');
+        console.error('Respuesta del servidor:', response);
+        throw new Error(`Error en la actualización: ${response?.data?.message || 'La respuesta del servidor no indica éxito'}`);
       }
     } catch (error) {
-      console.error('Error al actualizar el paciente:', error);
+      console.error('Error completo:', error.response || error);
       onPacienteUpdated(false);
-      setAlertMessage("Error al actualizar el paciente. Por favor, intente nuevamente.");
+      setAlertMessage(error.response?.data?.message || "Error al actualizar el paciente. Por favor, intente nuevamente.");
       setShowAlert(true);
     } finally {
       setIsSubmitting(false);
@@ -464,8 +491,7 @@ const ModalEditPaciente = ({ open, onClose, pacienteData, onPacienteUpdated }) =
                   rows={4}
                 />
               </Grid>
-              <Grid item xs={12}>
-                <FileInput
+              <Grid item xs={12}>                <FileInput
                   onChange={(file) => handleFileChange(file, 'imagen')}
                   value={paciente.imagen}
                   onRemove={() => handleRemoveFile('imagen')}

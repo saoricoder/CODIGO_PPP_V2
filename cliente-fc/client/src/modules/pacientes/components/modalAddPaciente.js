@@ -288,24 +288,40 @@ const ModalAddPaciente = ({ open, onClose, onPacienteAdded }) => {
         console.log('Paciente guardado con éxito:', response.data);
 
         try {
-          const userId = getCurrentUserId(); // Use the existing utility function
-          if (!userId) {
-            console.error('No user ID found');
-            return;
+          const loggedInUserId = getCurrentUserId();
+          console.log('Current user ID:', loggedInUserId);
+          
+          if (!loggedInUserId) {
+            throw new Error('No user logged in');
           }
 
-          const data_auditoria = {
-            id_usuario: userId,
-            modulo: "Pacientes",
-            operacion: "CREATE",
-            detalle: detalle_data({
-              ...response.data,
-              fecha_operacion: new Date().toISOString()
-            }, 'fcc_paciente.paciente').insertSql,
+          // Create detailed audit description
+          const detailedDescription = {
+            accion: "CREAR",
+            tabla: 'paciente',
+            id_registro: response.data.id_paciente,
+            datos_modificados: {
+              estado_anterior: null,
+              estado_nuevo: response.data,
+              detalles_paciente: {
+                nombre: response.data.nombre_paciente,
+                apellidos: response.data.apellidos_paciente,
+                dni: response.data.dni_paciente,
+                email: response.data.email_paciente
+              }
+            },
+            fecha_modificacion: new Date().toISOString()
+          };
+
+          const auditData = {
+            id_usuario: loggedInUserId,
+            modulo: "Paciente",
+            operacion: "CREAR",
+            detalle: JSON.stringify(detailedDescription),
             fecha: dayjs().format('YYYY-MM-DD')
           };
-          
-          await createAuditoria(data_auditoria);
+
+          await createAuditoria(auditData);
           console.log('Auditoría creada con éxito');
         } catch (error) {
           console.error('Error al crear auditoría:', error);
