@@ -1,10 +1,10 @@
 import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Box, Container, Button, Dialog, DialogActions, DialogContent, 
   DialogContentText, DialogTitle, Snackbar, Alert, Tooltip, 
   IconButton, Popover, Typography, Fab
 } from '@mui/material';
-import { useState, useEffect } from 'react';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
@@ -15,7 +15,8 @@ import ModalAddPaciente from '../components/modalAddPaciente';
 import ModalEditPaciente from '../components/modalEditPaciente';
 import BuscarPaciente from '../components/buscarPaciente';
 import { deleteLogicalPaciente, getPaciente, getPacientes } from '../../../services/pacientesServices';
-import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
+import { createAuditoria, generateSqlQueries, generateAuditData } from "../../../services/auditoriaServices";
+import { getCurrentUserId } from '../../../utils/userUtils';
 import "dayjs/locale/en-gb";
 import dayjs from 'dayjs';
 dayjs.locale("en-gb"); // Set dayjs locale to British English
@@ -78,29 +79,14 @@ const Paciente = () => {
   };
 
   // Handle patient addition result
-
-  const handlePacienteAdded = async (success, data) => {
+  const handlePacienteAdded = (success) => {
     if (success) {
       fetchPacientes();
       setSuccessAlert(true);
-
-      try {
-        // Creación de auditoría
-        let data_auditoria = {};
-        data_auditoria.id_usuario = data.id_paciente;
-        data_auditoria.modulo = "Paciente";
-        data_auditoria.operacion = "Crear";
-        data_auditoria.detalle = detalle_data(data).insertSql;
-        
-        await createAuditoria(data_auditoria);
-      } catch (error) {
-        console.error("Error al registrar auditoría:", error);
-      }
     } else {
       setErrorAlert(true);
     }
   };
-
 
   // Handle edit patient action
   const handleEdit = async (id) => {
@@ -108,40 +94,62 @@ const Paciente = () => {
     paciente.fecha_paciente = dayjs(paciente.fecha_paciente).format('YYYY-MM-DD');
     setSelectedPaciente(paciente);
     setEditModalOpen(true);
-    try {
-      // Creación de auditoría
-      let data_auditoria = {};
-      data_auditoria.id_usuario = paciente.id_paciente;
-      data_auditoria.modulo = "Paciente";
-      data_auditoria.operacion = "Editar";
-      data_auditoria.detalle = detalle_data(paciente).insertSql;
-      
-      await createAuditoria(data_auditoria);
-    } catch (error) {
-      console.error("Error al registrar auditoría:", error);
-    }
   };
-
-  // Handle delete patient action
   const handleDelete = async (id) => {
-    setIdPaciente(id);
-    const paciente = await getPaciente(id);
-    setSelectedStatePaciente(paciente.estado_paciente);
-    handleAlertOpen();
     try {
-      // Creación de auditoría
-      let data_auditoria = {};
-      data_auditoria.id_usuario = paciente.id_paciente;
-      data_auditoria.modulo = "Paciente0";
-      data_auditoria.operacion = "Eliminar";
-      data_auditoria.detalle = detalle_data(paciente).insertSql;
+      setIdPaciente(id);
+      const paciente = await getPaciente(id);
+      setSelectedStatePaciente(paciente.estado_paciente);
       
-      await createAuditoria(data_auditoria);
+      const loggedInUserId = getCurrentUserId();
+      console.log('Current user ID:', loggedInUserId);
+      console.log('LocalStorage data:', localStorage.getItem('user'));
+      
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
+      }
+      
+      // Fix: Reverse the action logic
+      const action = paciente.estado_paciente ? "DESACTIVAR" : "ACTIVAR";
+      const detailedDescription = {
+        accion: action,
+        tabla: 'paciente',
+        id_registro: paciente.id_paciente,
+        datos_modificados: {
+          estado_anterior: paciente.estado_paciente,
+          estado_nuevo: !paciente.estado_paciente,
+          detalles_paciente: {
+            nombre: paciente.nombre_paciente,
+            apellidos: paciente.apellidos_paciente,
+            dni: paciente.dni_paciente,
+            email: paciente.email_paciente
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
+      };
+
+      // Prepare data for SQL query
+      const queryData = {
+        ...paciente,
+        tabla: 'paciente',
+        schema: 'fcc_historiaclinica'
+      };
+
+      // Generate audit data with enhanced detail
+      const auditData = generateAuditData(
+        loggedInUserId,
+        "Paciente",
+        action,
+        JSON.stringify(detailedDescription)
+      );
+
+      await createAuditoria(auditData);
+      handleAlertOpen();
     } catch (error) {
       console.error("Error al registrar auditoría:", error);
+      setErrorAlert(true);
     }
   };
-
   // Open "Add Patient" modal
   const handleModalOpen = () => {
     setModalOpen(true);
