@@ -6,7 +6,7 @@ import ModalAddUsuario from '../components/ModalAddUsuario';
 import TablaUsuario from '../components/TablaUsuarios';
 import SearchIcon from '@mui/icons-material/Search';
 import { getUsuarios, createUsuario, updateUsuario, deleteUsuario } from '../../../services/usuarioServices'
-import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
+import {createAuditoria,} from "../../../services/auditoriaServices";
 import { getCurrentUserId } from "../../../utils/userUtils";
 export default function Usuarios() {
   const [users, setUsers] = useState([]);
@@ -169,37 +169,47 @@ export default function Usuarios() {
     }
   };
 
-
   const handleDelete = async (user) => {
     try {
       await deleteUsuario(user.id_usuario);
       setUsers(users.filter(u => u.id_usuario !== user.id_usuario));
 
-      // Registrar auditoría de eliminación
-      try {
-        const dataForAudit = {
-          ...user,
-          tabla: "usuarios", // Nombre de la tabla en la base de datos
-          id: user.id_usuario, // ID del registro eliminado
-        };
-
-        const data_auditoria = {
-          id_usuario: user.id_usuario, // ID del usuario que realiza la acción
-          modulo: "Usuarios", // Módulo en el que se realiza la acción
-          operacion: "ELIMINAR", // Operación realizada
-          detalle: detalle_data(dataForAudit).deleteSql, // Script SQL de eliminación
-        };
-
-        await createAuditoria(data_auditoria); // Registrar la auditoría
-        console.log("Auditoría de eliminación registrada:", data_auditoria);
-      } catch (error) {
-        console.error("Error al registrar auditoría de eliminación:", error);
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
       }
+
+      const detailedDescription = {
+        accion: "ELIMINAR",
+        tabla: 'usuarios',
+        id_registro: user.id_usuario,
+        datos_modificados: {
+          estado_anterior: user,
+          estado_nuevo: null,
+          detalles_usuario: {
+            nombre: user.nombre_usuario,
+            email: user.email_usuario,
+            rol: user.rol_usuario,
+            estado: user.estado_usuario
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
+      };
+
+      const auditData = {
+        id_usuario: loggedInUserId,
+        modulo: "Usuarios",
+        operacion: "ELIMINAR",
+        detalle: JSON.stringify(detailedDescription),
+        fecha: new Date().toISOString()
+      };
+
+      await createAuditoria(auditData);
     } catch (err) {
+      console.error('Error deleting user:', err);
       setError('Error deleting user');
     }
   };
-
 
   const handleOpenModal = () => {
     setModalOpen(true);
@@ -208,7 +218,6 @@ export default function Usuarios() {
   const handleCloseModal = () => {
     setModalOpen(false);
   };
-
 
   return (
     <Box sx={{ display: "flex" }}>

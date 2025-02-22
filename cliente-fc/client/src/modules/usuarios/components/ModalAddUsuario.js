@@ -14,7 +14,8 @@ import {
   MenuItem,
 } from '@mui/material';
 import { getPersonalSalud } from '../../../services/personalsaludServices';
-
+import { createAuditoria } from "../../../services/auditoriaServices";
+import { getCurrentUserId } from "../../../utils/userUtils";
 export default function ModalAddUsuario({ open, onClose, onAddUser, existingUsers }) {
   const [personalSalud, setPersonalSalud] = useState([]);
   const [selectedPersonal, setSelectedPersonal] = useState(null);
@@ -62,17 +63,53 @@ export default function ModalAddUsuario({ open, onClose, onAddUser, existingUser
       return;
     }
 
-    const newUser = {
-      id_personal_salud: selectedPersonal.id_personalsalud,
-      nombre_usuario: username,
-      apellido_usuario: `${selectedPersonal.nombres_personal} ${selectedPersonal.apellidos_personal}`,
-      correo_usuario: email,
-      password_usuario: password,
-      rol_usuario: role,
-      estado_usuario: true,
-    };
+    try {
+      const newUser = {
+        id_personal_salud: selectedPersonal.id_personalsalud,
+        nombre_usuario: username,
+        apellido_usuario: `${selectedPersonal.nombres_personal} ${selectedPersonal.apellidos_personal}`,
+        correo_usuario: email,
+        password_usuario: password,
+        rol_usuario: role,
+        estado_usuario: true,
+      };
+      await onAddUser(newUser); // Just wait for the operation to complete
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
+      }
 
-    onAddUser(newUser);
+      const detailedDescription = {
+        accion: "CREAR",
+        tabla: 'usuarios',
+        id_registro: newUser.id_personal_salud, // Use the personal_salud ID as reference
+        datos_modificados: {
+          estado_anterior: null,
+          estado_nuevo: newUser,
+          detalles_usuario: {
+            nombre: username,
+            email: email,
+            rol: role,
+            personal_salud: selectedPersonal.id_personalsalud
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
+      };
+
+      const auditData = {
+        id_usuario: loggedInUserId,
+        modulo: "Usuarios",
+        operacion: "CREAR",
+        detalle: JSON.stringify(detailedDescription),
+        fecha: new Date().toISOString()
+      };
+
+      await createAuditoria(auditData);
+      onClose();
+    } catch (error) {
+      console.error('Error creating user:', error);
+      setError('Error al crear el usuario. Por favor, intente nuevamente.');
+    }
   };
 
   return (
