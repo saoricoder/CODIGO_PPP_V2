@@ -102,16 +102,25 @@ const Login = () => {
   };
   // Function to handle logout and save logout time
   const handleLogout = async () => {
-    const logoutTime = new Date().toISOString(); // Get current time
-    console.log('Logout time:', logoutTime);
-    // Registro de auditoría al cerrar sesión
+    const logoutTime = new Date();
+    const ecuadorTime = new Intl.DateTimeFormat('es-EC', {
+      timeZone: 'America/Guayaquil',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).format(logoutTime);
+
+    console.log('Logout time (Ecuador):', ecuadorTime);
+    
     try {
       const user = JSON.parse(localStorage.getItem("user"));
       let data_auditoria = {
         id_usuario: user.id_usuario,
         modulo: "Login",
         operacion: "Cerrar Sesión",
-        detalle: `Usuario ${user.id_usuario} cerró sesión a las ${logoutTime}`
+        detalle: `Usuario ${user.id_usuario} cerró sesión a las ${ecuadorTime}`,
+        hora_salida: ecuadorTime
       };
       await createAuditoria(data_auditoria);
       console.log('Auditoría de cierre de sesión creada con éxito');
@@ -128,16 +137,25 @@ const Login = () => {
 // Example of using window event to capture logout time
 useEffect(() => {
   const handleWindowClose = async () => {
-    const logoutTime = new Date().toISOString();
-    console.log('Window closed at:', logoutTime);
-    // Registro de auditoría al cerrar la ventana
+    const logoutTime = new Date();
+    const ecuadorTime = new Intl.DateTimeFormat('es-EC', {
+      timeZone: 'America/Guayaquil',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).format(logoutTime);
+
+    console.log('Window closed at (Ecuador):', ecuadorTime);
+    
     try {
       const user = JSON.parse(localStorage.getItem("user"));
       let data_auditoria = {
         id_usuario: user.id_usuario,
         modulo: "Login",
         operacion: "Cerrar Sesión",
-        detalle: `Usuario ${user.id_usuario} cerró la ventana a las ${logoutTime}`
+        detalle: `Usuario ${user.id_usuario} cerró la ventana a las ${ecuadorTime}`,
+        hora_salida: ecuadorTime
       };
       await createAuditoria(data_auditoria);
       console.log('Auditoría de cierre de ventana creada con éxito');
