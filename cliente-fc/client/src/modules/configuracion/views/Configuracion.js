@@ -23,8 +23,8 @@ import {
 } from "@mui/icons-material";
 import Drawer from "../../../components/Drawer";
 import NavbarAdmin from "../../../components/NavbarAdmin";
-import { createAuditoria, detalle_data } from '../../../services/auditoriaServices';
-
+import {createAuditoria,} from "../../../services/auditoriaServices";
+import { getCurrentUserId } from "../../../utils/userUtils";
 const Configuracion = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -36,49 +36,79 @@ const Configuracion = () => {
 
   const handleDeleteAccount = async () => {
     try {
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
+      }
+
       // Implementar lógica para eliminar cuenta
-      const user = JSON.parse(localStorage.getItem("user"));
-      const deleteTime = new Date().toISOString();
-      
-      let data_auditoria = {
-        id_usuario: user.id_usuario,
-        modulo: "Configuración",
-        operacion: "Eliminar Cuenta",
-        detalle: detalle_data({
-          id_usuario: user.id_usuario,
-          fecha_operacion: deleteTime,
-          tipo_operacion: 'delete_account'
-        }, 'fcc_auth.usuarios').deleteSql
+      const detailedDescription = {
+        accion: "ELIMINAR",
+        tabla: 'usuarios',
+        id_registro: loggedInUserId,
+        datos_modificados: {
+          estado_anterior: { id_usuario: loggedInUserId, estado: 'activo' },
+          estado_nuevo: { id_usuario: loggedInUserId, estado: 'eliminado' },
+          detalles_eliminacion: {
+            tipo_operacion: "Eliminación de Cuenta",
+            fecha_eliminacion: new Date().toISOString(),
+            motivo: "Solicitud del usuario"
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
       };
-      await createAuditoria(data_auditoria);
-      console.log('Auditoría de eliminación de cuenta creada con éxito');
+
+      const auditData = {
+        id_usuario: loggedInUserId,
+        modulo: "Configuración",
+        operacion: "Eliminar",
+        detalle: JSON.stringify(detailedDescription),
+        fecha: new Date().toISOString()
+      };
+
+      await createAuditoria(auditData);
       setOpenDeleteDialog(false);
     } catch (error) {
-      console.error('Error al crear auditoría de eliminación de cuenta:', error);
+      console.error('Error al eliminar cuenta:', error);
     }
   };
 
   const handleChangePassword = async () => {
     try {
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
+      }
+
       // Implementar lógica para cambiar contraseña
-      const user = JSON.parse(localStorage.getItem("user"));
-      const updateTime = new Date().toISOString();
-      
-      let data_auditoria = {
-        id_usuario: user.id_usuario,
-        modulo: "Configuración",
-        operacion: "Cambiar Contraseña",
-        detalle: detalle_data({
-          id_usuario: user.id_usuario,
-          fecha_operacion: updateTime,
-          tipo_operacion: 'update_password'
-        }, 'fcc_auth.usuarios').updateSql
+      const detailedDescription = {
+        accion: "EDITAR",
+        tabla: 'usuarios',
+        id_registro: loggedInUserId,
+        datos_modificados: {
+          estado_anterior: { id_usuario: loggedInUserId },
+          estado_nuevo: { id_usuario: loggedInUserId },
+          detalles_cambios: {
+            tipo_operacion: "Cambio de Contraseña",
+            fecha_modificacion: new Date().toISOString(),
+            campo_modificado: "password_usuario"
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
       };
-      await createAuditoria(data_auditoria);
-      console.log('Auditoría de cambio de contraseña creada con éxito');
+
+      const auditData = {
+        id_usuario: loggedInUserId,
+        modulo: "Configuración",
+        operacion: "Editar",
+        detalle: JSON.stringify(detailedDescription),
+        fecha: new Date().toISOString()
+      };
+
+      await createAuditoria(auditData);
       setOpenPasswordDialog(false);
     } catch (error) {
-      console.error('Error al crear auditoría de cambio de contraseña:', error);
+      console.error('Error al cambiar contraseña:', error);
     }
   };
 
