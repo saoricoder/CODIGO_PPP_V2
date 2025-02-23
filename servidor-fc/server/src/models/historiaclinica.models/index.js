@@ -54,7 +54,7 @@ function setupHistoriaClinicaModels(sequelize) {
   });
   TipoTerapia.associate({ Terapias });
   Terapias.associate({ PersonalSalud, Historia, TipoTerapia });
-  Auditoria.associate({ Usuario });
+  //Auditoria.associate({ Usuario });
 }
 
 module.exports = setupHistoriaClinicaModels;
