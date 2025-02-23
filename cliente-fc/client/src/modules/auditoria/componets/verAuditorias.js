@@ -57,8 +57,34 @@ const VerAuditorias = () => {
 
   const handleApplyFilters = () => {
     const filtered = auditorias.filter((auditoria) => {
-      const dateMatch = !filterDate || 
-        (auditoria.fecha && auditoria.fecha.includes(filterDate));
+      let dateMatch = true;
+      if (filterDate && auditoria.fecha) {
+        try {
+          // Parse the date with explicit timezone
+          const auditoriaDate = new Date(auditoria.fecha + ' UTC-05:00');
+          const filterDateObj = new Date(filterDate + 'T00:00:00-05:00');
+          
+          // Format dates for comparison using Ecuador timezone
+          const auditoriaDateStr = auditoriaDate.toLocaleDateString('es-EC', {
+            timeZone: 'America/Guayaquil',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+
+          const filterDateStr = filterDateObj.toLocaleDateString('es-EC', {
+            timeZone: 'America/Guayaquil',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+
+          dateMatch = auditoriaDateStr === filterDateStr;
+        } catch (error) {
+          console.error('Error processing date:', error);
+          dateMatch = false;
+        }
+      }
       
       const userMatch = !filterUser || 
         (auditoria.id_usuario && 
@@ -68,7 +94,67 @@ const VerAuditorias = () => {
     });
     setFilteredAuditorias(filtered);
   };
-
+  // Update in the Grid container
+  <Grid container spacing={2} alignItems="center">
+    <Grid item xs={12} md={3}>
+      <Card sx={{ p: 2 }}>
+        <TextField
+          fullWidth
+          label="Fecha"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon color="action" />
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Card>
+    </Grid>
+    <Grid item xs={12} md={3}>
+      <TextField
+        fullWidth
+        label="Usuario"
+        size="small"
+        value={filterUser}
+        onChange={(e) => setFilterUser(e.target.value)}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon color="action" />
+            </InputAdornment>
+          ),
+        }}
+      />
+    </Grid>
+    <Grid item xs={12} md={6}>
+      <Button
+        fullWidth
+        variant="contained"
+        color="primary"
+        onClick={handleApplyFilters}
+        sx={{ height: 45, fontWeight: "bold" }}
+      >
+        Aplicar Filtros
+      </Button>
+    </Grid>
+    <Grid item xs={12} md={6}>
+      <Button
+        fullWidth
+        variant="outlined"
+        color="secondary"
+        onClick={handleClearFilters}
+        sx={{ height: 45 }}
+      >
+        Limpiar Filtros
+      </Button>
+    </Grid>
+  </Grid>
   const handleDrawerToggle = () => setDrawerOpen(!drawerOpen);
   const handleGoBack = () => navigate("/fcc-auditoria");
 
