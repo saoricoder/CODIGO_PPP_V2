@@ -1,4 +1,4 @@
-const { Model, DataTypes } = require("sequelize");
+const { Model, DataTypes, Sequelize } = require("sequelize");
 
 class Auditoria extends Model {
   static config(sequelize) {
@@ -10,13 +10,13 @@ class Auditoria extends Model {
       timestamps: false,
     };
   }
-
+/*
   static associate(models) {
     Auditoria.belongsTo(models.Usuario, {
       foreignKey: 'id_usuario',
       as: 'usuario',
     });
-  }
+  }*/
 }
 
 const AuditoriaSchema = {
@@ -26,19 +26,7 @@ const AuditoriaSchema = {
     type: DataTypes.INTEGER,
     autoIncrement: true,
   },
-  fecha: {
-    type: DataTypes.DATEONLY,
-    allowNull: false,
-    defaultValue: DataTypes.NOW
-  },
-  hora_ingreso: {
-    type: DataTypes.TIME,
-    allowNull: false
-  },
-  hora_salida: {
-    type: DataTypes.TIME,
-    allowNull: false
-  },
+  
   id_usuario: {
     allowNull: true,
     type: DataTypes.BIGINT,
@@ -83,18 +71,47 @@ const AuditoriaSchema = {
   fecha: {
     allowNull: true,
     type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW, // Registrar la fecha automáticamente
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP AT TIME ZONE \'America/Guayaquil\''),
+    get() {
+      const date = this.getDataValue('fecha');
+      if (date) {
+        return new Date(date).toLocaleString('es-EC', {
+          timeZone: 'America/Guayaquil'
+        });
+      }
+      return null;
+    }
   },
   hora_ingreso: {
     allowNull: true,
     type: DataTypes.TIME,
-    defaultValue: DataTypes.NOW, // Set default to current time
+    defaultValue: Sequelize.literal('CURRENT_TIME AT TIME ZONE \'America/Guayaquil\''),
+    get() {
+      const time = this.getDataValue('hora_ingreso');
+      if (time) {
+        return new Date(`1970-01-01T${time}`).toLocaleTimeString('es-EC', {
+          timeZone: 'America/Guayaquil',
+          hour12: false
+        });
+      }
+      return null;
+    }
   },
   hora_salida: {
     allowNull: true,
     type: DataTypes.TIME,
-    defaultValue: DataTypes.NOW, // Set default to current time
-  },
+    defaultValue: Sequelize.literal('CURRENT_TIME AT TIME ZONE \'America/Guayaquil\''),
+    get() {
+      const time = this.getDataValue('hora_salida');
+      if (time) {
+        return new Date(`1970-01-01T${time}`).toLocaleTimeString('es-EC', {
+          timeZone: 'America/Guayaquil',
+          hour12: false
+        });
+      }
+      return null;
+    }
+  }
 };
 
 module.exports = { Auditoria, AuditoriaSchema };

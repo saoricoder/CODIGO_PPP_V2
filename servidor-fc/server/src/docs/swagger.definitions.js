@@ -85,12 +85,22 @@ const swaggerDefinitions = {
             type: "string",
             description: "detalle de metodo SQL realizado INSERT INTO",
           },
-          fecha: { // New field added
+          fecha: { 
             type: "string",
             format: "date-time",
             description: "Fecha y hora de la operación",
           },
-          required: ["id_usuario", "modulo", "operacion", "detalle", "fecha"], // Ensure required fields are listed
+          hora_ingreso: {
+            type: "string",
+            format: "time",
+            description: "Hora de ingreso",
+          },
+          hora_salida: {
+            type: "string",
+            format: "time",
+            description: "Hora de salida",
+          },
+          required: ["id_usuario", "modulo", "operacion", "detalle", "fecha","hora_ingreso","hora_salida"],
         },
       },
       Atencion: {
@@ -386,12 +396,13 @@ const swaggerDefinitions = {
               type: "object",
               properties: {
                 id_usuario: { type: "string", description: "ID del usuario" },
+                fecha: { type: "string", format: "date-time", description: "Fecha de la operación" },
                 modulo: { type: "string", description: "Módulo de operación" },
                 operacion: { type: "string", description: "Operación realizada" },
                 detalle: { type: "string", description: "Detalle de la operación" },
                 fecha: { type: "string", format: "date-time", description: "Fecha de la operación" }
               },
-              required: ["id_usuario", "modulo", "operacion", "detalle", "fecha"]
+              required: ["id_usuario", "modulo", "operacion", "detalle", "fecha","hora_ingreso","hora_salida"]
             }
           }
         }
