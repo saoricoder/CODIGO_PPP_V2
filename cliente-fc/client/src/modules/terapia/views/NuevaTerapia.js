@@ -36,7 +36,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getPaciente } from '../../../services/pacientesServices';
 import { createTerapia, getTerapiaByPaciente, getLastTerapia } from '../../../services/terapia';
 import { getHistoria, getHistoriaFile } from '../../../services/historiaServices';
-import { createAuditoria, detalle_data } from "../../../services/auditoriaServices";
+import { createAuditoria,  } from "../../../services/auditoriaServices";
 import { getCurrentUserId } from "../../../utils/userUtils";
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -363,15 +363,15 @@ const SistemaTerapias = () => {
   const handleBack = () => setStep((prevStep) => prevStep - 1);
   const handleSubmit = async () => {
     try {
-      const loggedInUser = JSON.parse(localStorage.getItem('user'));
-      if (!loggedInUser) {
-        throw new Error('Usuario no autenticado');
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
       }
       
       const formData = new FormData();
       formData.append('notas_evolucion', notasTratamiento);
       formData.append('id_tipo_terapia', selectedTherapy === 'fisica' ? 1 : selectedTherapy === 'ocupacional' ? 2 : 3);
-      formData.append('id_personalsalud', loggedInUser.id_usuario);
+      formData.append('id_personalsalud', loggedInUserId);
       formData.append('id_historia', id);
       formData.append('fecha_hora', new Date().toISOString());
       formData.append('farmacoterapia_indicaciones', medicacion);
@@ -381,19 +381,40 @@ const SistemaTerapias = () => {
       }
     
       const response = await createTerapia(formData);
-      const auditData = {
-        id_usuario: loggedInUser.id_usuario,
+      const detailedDescription = {
+        accion: "CREAR",
+        tabla: 'terapias',
+        id_registro: response.data.id_terapia,
+        datos_modificados: {
+          estado_anterior: null,
+          estado_nuevo: {
+            tipo_terapia: selectedTherapy,
+            notas_evolucion: notasTratamiento,
+            farmacoterapia_indicaciones: medicacion,
+            fecha_hora: new Date().toISOString(),
+            id_historia: id,
+            archivo_adjunto: file ? file.name : null
+          },
+          detalles_creacion: {
+            tipo_operacion: "Creación de Nueva Terapia",
+            paciente: {
+              id: id,
+              nombre: `${paciente.nombre_paciente} ${paciente.apellidos_paciente}`
+            },
+            fecha_creacion: new Date().toISOString()
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
+      };
+
+      await createAuditoria({
+        id_usuario: loggedInUserId,
         modulo: "Terapias",
         operacion: "Crear",
-        detalle: detalle_data({
-          tabla: "terapia",
-          datos: response.data,
-          schema: "fcc_historiaclinica",
-          id_registro: response.data.id_terapia
-        }).insertSql
-      };
-      
-      await createAuditoria(auditData);
+        detalle: JSON.stringify(detailedDescription),
+        fecha: new Date().toISOString()
+      });
+
       navigate('/Fcc-terapias');
     } catch (error) {
       console.error('Error al guardar la terapia:', error);

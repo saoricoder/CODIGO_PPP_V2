@@ -11,6 +11,9 @@ import TerapiasTabs from '../components/TerapiasTabs';
 import TerapiasAnteriores from '../components/TerapiasAnteriores';
 import AsistenciaTerapias from '../components/AsistenciaTerapias';
 import { getPaciente } from '../../../services/pacientesServices';
+import { createAuditoria } from '../../../services/auditoriaServices';
+  import { getCurrentUserId } from "../../../utils/userUtils";
+
 
 export default function Terapias() {
   const navigate = useNavigate();
@@ -24,6 +27,7 @@ export default function Terapias() {
   const [loadingPacienteData, setLoadingPacienteData] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -72,7 +76,40 @@ export default function Terapias() {
 
   const handleUpdateTerapia = async (terapiaId, updatedTerapiaData) => {
     try {
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
+      }
+
+      const previousTerapia = terapias.find(t => t.id_terapia === terapiaId);
       const updatedTerapia = await updateTerapia(terapiaId, updatedTerapiaData);
+
+      const detailedDescription = {
+        accion: "EDITAR",
+        tabla: 'terapias',
+        id_registro: terapiaId,
+        datos_modificados: {
+          estado_anterior: previousTerapia,
+          estado_nuevo: updatedTerapia,
+          detalles_cambios: {
+            tipo_operacion: "Actualización de Terapia",
+            campos_modificados: Object.keys(updatedTerapiaData).filter(key => 
+              updatedTerapiaData[key] !== previousTerapia[key]
+            ),
+            fecha_modificacion: new Date().toISOString()
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
+      };
+
+      await createAuditoria({
+        id_usuario: loggedInUserId,
+        modulo: "Terapias",
+        operacion: "Editar",
+        detalle: JSON.stringify(detailedDescription),
+        fecha: new Date().toISOString()
+      });
+
       setTerapias(prevTerapias => 
         prevTerapias.map(terapia => 
           terapia.id_terapia === terapiaId ? updatedTerapia : terapia
@@ -81,17 +118,48 @@ export default function Terapias() {
       return updatedTerapia;
     } catch (error) {
       console.error("Error updating terapia:", error);
-      // Manejar el error (por ejemplo, mostrar un mensaje de error al usuario)
+      throw error;
     }
   };
 
   const handleDeleteTerapia = async (terapiaId) => {
     try {
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
+      }
+
+      const terapiaToDelete = terapias.find(t => t.id_terapia === terapiaId);
       await deleteTerapia(terapiaId);
+
+      const detailedDescription = {
+        accion: "ELIMINAR",
+        tabla: 'terapias',
+        id_registro: terapiaId,
+        datos_modificados: {
+          estado_anterior: terapiaToDelete,
+          estado_nuevo: null,
+          detalles_eliminacion: {
+            tipo_operacion: "Eliminación de Terapia",
+            fecha_eliminacion: new Date().toISOString(),
+            paciente_id: selectedPaciente
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
+      };
+
+      await createAuditoria({
+        id_usuario: loggedInUserId,
+        modulo: "Terapias",
+        operacion: "Eliminar",
+        detalle: JSON.stringify(detailedDescription),
+        fecha: new Date().toISOString()
+      });
+
       setTerapias(prevTerapias => prevTerapias.filter(terapia => terapia.id_terapia !== terapiaId));
     } catch (error) {
       console.error("Error deleting terapia:", error);
-      // Manejar el error (por ejemplo, mostrar un mensaje de error al usuario)
+      throw error;
     }
   };
 

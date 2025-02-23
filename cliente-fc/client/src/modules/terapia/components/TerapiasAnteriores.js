@@ -12,6 +12,8 @@ import dayjs from 'dayjs';
 import PdfGeneratorTerapias from '../../../components/PdfGeneratorTerapias';
 import { API_IMAGE_URL } from "../../../services/apiConfig";
 import TerapiaDetailsDialog from './TerapiaDetailsDialog'; // Asegúrate de que la ruta sea correcta
+import { createAuditoria } from '../../../services/auditoriaServices';
+import { getCurrentUserId } from "../../../utils/userUtils";
 
 const tiposTerapia = [
   { id: 'all', name: 'Todas las Terapias' },
@@ -107,25 +109,90 @@ const TerapiasAnteriores = ({ terapias, tipoTerapia, handleChangeTipoTerapia, ha
   const handleSaveEdit = async () => {
     if (editedTerapia) {
       try {
+        const loggedInUserId = getCurrentUserId();
+        if (!loggedInUserId) {
+          throw new Error('No user logged in');
+        }
+
         const updatedTerapia = await handleUpdateTerapia(editedTerapia.id_terapia, editedTerapia);
-        console.log("Terapia actualizada:", updatedTerapia);
+        
+        const detailedDescription = {
+          accion: "EDITAR",
+          tabla: 'terapias',
+          id_registro: editedTerapia.id_terapia,
+          datos_modificados: {
+            estado_anterior: selectedTerapia,
+            estado_nuevo: editedTerapia,
+            detalles_cambios: {
+              tipo_operacion: "Actualización de Terapia",
+              campos_modificados: Object.keys(editedTerapia).filter(key => 
+                editedTerapia[key] !== selectedTerapia[key]
+              ),
+              fecha_modificacion: new Date().toISOString()
+            }
+          },
+          fecha_modificacion: new Date().toISOString()
+        };
+
+        await createAuditoria({
+          id_usuario: loggedInUserId,
+          modulo: "Terapias",
+          operacion: "Editar",
+          detalle: JSON.stringify(detailedDescription),
+          fecha: new Date().toISOString()
+        });
+
         setFilteredTerapias(prevTerapias => 
           prevTerapias.map(t => t.id_terapia === updatedTerapia.id_terapia ? updatedTerapia : t)
         );
         handleCloseModal();
       } catch (error) {
         console.error("Error updating terapia:", error);
-        // Manejar el error (por ejemplo, mostrar un mensaje de error al usuario)
       }
     }
   };
 
   const handleConfirmDelete = async () => {
     if (terapiaToDelete) {
-      await handleDeleteTerapia(terapiaToDelete.id_terapia);
-      handleCloseDeleteDialog();
-      // Actualiza la lista de terapias después de eliminar
-      setFilteredTerapias(prevTerapias => prevTerapias.filter(t => t.id_terapia !== terapiaToDelete.id_terapia));
+      try {
+        const loggedInUserId = getCurrentUserId();
+        if (!loggedInUserId) {
+          throw new Error('No user logged in');
+        }
+
+        await handleDeleteTerapia(terapiaToDelete.id_terapia);
+
+        const detailedDescription = {
+          accion: "ELIMINAR",
+          tabla: 'terapias',
+          id_registro: terapiaToDelete.id_terapia,
+          datos_modificados: {
+            estado_anterior: terapiaToDelete,
+            estado_nuevo: null,
+            detalles_eliminacion: {
+              tipo_operacion: "Eliminación de Terapia",
+              fecha_eliminacion: new Date().toISOString(),
+              tipo_terapia: tiposTerapia.find(t => t.id === terapiaToDelete.id_tipo_terapia)?.name
+            }
+          },
+          fecha_modificacion: new Date().toISOString()
+        };
+
+        await createAuditoria({
+          id_usuario: loggedInUserId,
+          modulo: "Terapias",
+          operacion: "Eliminar",
+          detalle: JSON.stringify(detailedDescription),
+          fecha: new Date().toISOString()
+        });
+
+        handleCloseDeleteDialog();
+        setFilteredTerapias(prevTerapias => 
+          prevTerapias.filter(t => t.id_terapia !== terapiaToDelete.id_terapia)
+        );
+      } catch (error) {
+        console.error("Error deleting terapia:", error);
+      }
     }
   };
 
@@ -208,7 +275,7 @@ const TerapiasAnteriores = ({ terapias, tipoTerapia, handleChangeTipoTerapia, ha
 
       {filteredTerapias.length === 0 ? (
         <Alert severity="info" sx={{ mt: 2 }}>
-          No hay terapias {tipoTerapia !== 'all' ? de tipo ${tiposTerapia.find(t => t.id === tipoTerapia)?.name} : ''} registradas para este paciente en el rango de fechas seleccionado.
+          No hay terapias {tipoTerapia !== 'all' ? `de tipo ${tiposTerapia.find(t => t.id === tipoTerapia)?.name}` : ''} registradas para este paciente en el rango de fechas seleccionado.
         </Alert>
       ) : (
         <>
