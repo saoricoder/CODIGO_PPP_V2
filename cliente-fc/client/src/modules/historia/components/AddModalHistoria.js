@@ -5,8 +5,8 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AntecedentesFamiliares from './AntecedentesFamiliares';
 import AntecedentesPersonales from './AntecedentesPersonales';
-import { createAuditoria, detalle_data } from '../../../services/auditoriaServices';
-
+import { createAuditoria,} from '../../../services/auditoriaServices';
+import { getCurrentUserId } from "../../../utils/userUtils";
 const AddModalHistoria = ({ open, onClose, historiaId, onHistoriaUpdated, setIsNewHistory, isNewHistory}) => {
   const [activeStep, setActiveStep] = useState(0);
   const [newMedicamento, setNewMedicamento] = useState('');
@@ -212,67 +212,54 @@ const AddModalHistoria = ({ open, onClose, historiaId, onHistoriaUpdated, setIsN
 
   const handleSubmit = async () => {
     try {
-      setIsSubmitting(true);
-      const userId = getCurrentUserId();
-      if (!userId) {
-        throw new Error('Usuario no autenticado');
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
       }
   
-      const formData = new FormData();
-  
-      // Añadir campos no relacionados con archivos
-      Object.keys(paciente).forEach(key => {
-        if (!['imagen', 'archivo_documentos_cedulas', 'archivo_certificado_medico'].includes(key)) {
-          formData.append(key, paciente[key]);
-        }
-      });
-  
-      // Manejar archivos
-      if (paciente.imagen instanceof File) {
-        formData.append('imagen', paciente.imagen);
-      }
-      if (paciente.imagen === null) {
-        formData.append('imagen', null);
-      }
-      if (paciente.archivo_documentos_cedulas instanceof File) {
-        formData.append('archivo_documentos_cedulas', paciente.archivo_documentos_cedulas);
-      }
-      if (paciente.archivo_documentos_cedulas === null) {
-        formData.append('archivo_documentos_cedulas', null);
-      }
-      if (paciente.archivo_certificado_medico instanceof File) {
-        formData.append('archivo_certificado_medico', paciente.archivo_certificado_medico);
-      }
-      if (paciente.archivo_certificado_medico === null) {
-        formData.append('archivo_certificado_medico', null);
+      let response;
+      if (isNewHistory) {
+        response = await createHistoria(historiaId, historia);
+      } else {
+        response = await updateHistoria(historiaId, historia);
       }
   
-      console.log('Paciente a guardar:', paciente);
-      console.log(paciente.imagen);
-  
-      const updatedPaciente = await updatePaciente(paciente.id_paciente, formData);
-  
-      // Crear registro de auditoría
-      const data_auditoria = {
-        id_usuario: userId,
-        modulo: "Pacientes",
-        operacion: "ACTUALIZAR",
-        detalle: detalle_data({
-          ...paciente,
-          id: paciente.id_paciente
-        }, "fcc_paciente.paciente").updateSql
+      const detailedDescription = {
+        accion: isNewHistory ? "CREAR" : "EDITAR",
+        tabla: 'historia',
+        id_registro: historiaId,
+        datos_modificados: {
+          estado_anterior: isNewHistory ? null : await getHistoria(historiaId),
+          estado_nuevo: historia,
+          detalles_cambios: {
+            tipo_operacion: isNewHistory ? "Creación de Historia" : "Actualización de Historia",
+            motivo_consulta: historia.motivo_consulta_historia,
+            seguro_social: historia.seguro_social,
+            medicamentos: historia.medicamentos,
+            alergias: historia.alergias,
+            diagnostico: historia.diagnostico_presuntivo
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
       };
   
-      await createAuditoria(data_auditoria);
+      const auditData = {
+        id_usuario: loggedInUserId,
+        modulo: "Historia",
+        operacion: isNewHistory ? "Crear" : "Editar", // Changed to match allowed values
+        detalle: JSON.stringify(detailedDescription),
+        fecha: new Date().toISOString()
+      };
   
-      onPacienteUpdated(true, updatedPaciente);
+      await createAuditoria(auditData);
+      
+      if (onHistoriaUpdated) {
+        onHistoriaUpdated(response);
+      }
       onClose();
     } catch (error) {
-      console.error("Error actualizando paciente:", error);
-      setShowAlert(true);
-      setAlertMessage("Error al actualizar el paciente");
-    } finally {
-      setIsSubmitting(false);
+      console.error('Error saving historia:', error);
+      alert('Error al guardar la historia clínica');
     }
   };
   const renderStepContent = (step) => {

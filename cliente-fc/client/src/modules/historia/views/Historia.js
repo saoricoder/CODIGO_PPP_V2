@@ -9,7 +9,7 @@ import { createAuditoria, detalle_data } from '../../../services/auditoriaServic
 import ButtonAdd from "../components/AddButton";
 import CuadroHistorialClinico from "../components/CuadroHistorialClinico";
 import { usePacienteContext } from "../../../components/base/PacienteContext";
-
+import { getCurrentUserId } from "../../../utils/userUtils";
 const Historia = () => {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [historia, setHistoria] = useState(null);
@@ -73,7 +73,45 @@ const Historia = () => {
             setLoading(true);
             try {
                 const pacienteData = await getPaciente(selectedPaciente);
-                await fetchHistoria(pacienteData.id_paciente);
+                const historiaData = await getHistoria(pacienteData.id_paciente);
+                setHistoria(historiaData);
+                setIsNewHistory(!historiaData.motivo_consulta_historia);
+
+                const loggedInUserId = getCurrentUserId();
+                if (!loggedInUserId) {
+                    throw new Error('No user logged in');
+                }
+
+                const detailedDescription = {
+                    accion: "EDITAR",
+                    tabla: 'historia',
+                    id_registro: pacienteData.id_paciente,
+                    datos_modificados: {
+                        estado_anterior: historia,
+                        estado_nuevo: historiaData,
+                        detalles_cambios: {
+                            tipo_operacion: "Actualización de Historia Clínica",
+                            fecha_actualizacion: new Date().toISOString(),
+                            paciente: {
+                                id: pacienteData.id_paciente,
+                                nombre: `${pacienteData.nombres_paciente} ${pacienteData.apellidos_paciente}`
+                            }
+                        }
+                    },
+                    fecha_modificacion: new Date().toISOString()
+                };
+
+                const auditData = {
+                    id_usuario: loggedInUserId,
+                    modulo: "Historia",
+                    operacion: "Editar",
+                    detalle: JSON.stringify(detailedDescription),
+                    fecha: new Date().toISOString()
+                };
+
+                await createAuditoria(auditData);
+            } catch (error) {
+                console.error("Error updating historia:", error);
             } finally {
                 setLoading(false);
             }
