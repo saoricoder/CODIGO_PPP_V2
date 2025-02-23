@@ -41,6 +41,8 @@ import Drawer from "../../../components/Drawer";
 import NavbarAdmin from "../../../components/NavbarAdmin";
 import useImageCache from "../../../components/global/UseImageCache";
 import { API_IMAGE_URL } from "../../../services/apiConfig";
+import { getCurrentUserId } from "../../../utils/userUtils";
+import {createAuditoria,} from "../../../services/auditoriaServices";
 
 const Perfil = () => {
   const [user, setUser] = useState(null);
@@ -95,8 +97,65 @@ const Perfil = () => {
 
   const handleSave = async () => {
     try {
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
+      }
+
       await updateUsuario(user.id_usuario, editedUser);
       await updatePersonalSalud(personalSalud.id_personalsalud, editedPersonalSalud);
+
+      // Audit for user update
+      const userAuditDescription = {
+        accion: "EDITAR",
+        tabla: 'usuarios',
+        id_registro: user.id_usuario,
+        datos_modificados: {
+          estado_anterior: user,
+          estado_nuevo: editedUser,
+          detalles_cambios: {
+            tipo_operacion: "Actualización de Perfil Usuario",
+            campos_modificados: Object.keys(editedUser).filter(key => editedUser[key] !== user[key]),
+            fecha_modificacion: new Date().toISOString()
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
+      };
+
+      // Audit for personal salud update
+      const personalSaludAuditDescription = {
+        accion: "EDITAR",
+        tabla: 'personal_salud',
+        id_registro: personalSalud.id_personalsalud,
+        datos_modificados: {
+          estado_anterior: personalSalud,
+          estado_nuevo: editedPersonalSalud,
+          detalles_cambios: {
+            tipo_operacion: "Actualización de Perfil Personal Salud",
+            campos_modificados: Object.keys(editedPersonalSalud).filter(key => editedPersonalSalud[key] !== personalSalud[key]),
+            fecha_modificacion: new Date().toISOString()
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
+      };
+
+      await Promise.all([
+        createAuditoria({
+          id_usuario: loggedInUserId,
+          modulo: "Usuarios",
+          operacion: "Editar",
+          detalle: JSON.stringify(userAuditDescription),
+          fecha: new Date().toISOString()
+        }),
+        createAuditoria({
+          id_usuario: loggedInUserId,
+          modulo: "Personal Salud",
+          operacion: "Editar",
+          detalle: JSON.stringify(personalSaludAuditDescription),
+          fecha: new Date().toISOString()
+        })
+      ]);
+      
       setUser(editedUser);
       setPersonalSalud(editedPersonalSalud);
       setIsEditing(false);
