@@ -69,47 +69,33 @@ const AuditoriaSchema = {
     type: DataTypes.TEXT,
   },
   fecha: {
-    allowNull: true,
     type: DataTypes.DATE,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP AT TIME ZONE \'America/Guayaquil\''),
+    allowNull: true,
     get() {
-      const date = this.getDataValue('fecha');
-      if (date) {
-        return new Date(date).toLocaleString('es-EC', {
-          timeZone: 'America/Guayaquil'
-        });
-      }
-      return null;
+      return this.getDataValue('fecha');
+    },
+    set(value) {
+      this.setDataValue('fecha', value);
     }
   },
   hora_ingreso: {
-    allowNull: true,
     type: DataTypes.TIME,
-    defaultValue: Sequelize.literal('CURRENT_TIME AT TIME ZONE \'America/Guayaquil\''),
+    allowNull: true,
     get() {
-      const time = this.getDataValue('hora_ingreso');
-      if (time) {
-        return new Date(`1970-01-01T${time}`).toLocaleTimeString('es-EC', {
-          timeZone: 'America/Guayaquil',
-          hour12: false
-        });
-      }
-      return null;
+      return this.getDataValue('hora_ingreso');
+    },
+    set(value) {
+      this.setDataValue('hora_ingreso', value);
     }
   },
   hora_salida: {
-    allowNull: true,
     type: DataTypes.TIME,
-    defaultValue: Sequelize.literal('CURRENT_TIME AT TIME ZONE \'America/Guayaquil\''),
+    allowNull: true,
     get() {
-      const time = this.getDataValue('hora_salida');
-      if (time) {
-        return new Date(`1970-01-01T${time}`).toLocaleTimeString('es-EC', {
-          timeZone: 'America/Guayaquil',
-          hour12: false
-        });
-      }
-      return null;
+      return this.getDataValue('hora_salida');
+    },
+    set(value) {
+      this.setDataValue('hora_salida', value);
     }
   }
 };
