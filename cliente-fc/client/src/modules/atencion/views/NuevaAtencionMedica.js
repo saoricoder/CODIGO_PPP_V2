@@ -32,8 +32,8 @@ import {getHistoria,updateHistoria,} from "../../../services/historiaServices";
 import {organs,regions,NewAtencionSteps,} from "../../../components/data/Data";
 import { usePacienteContext } from "../../../components/base/PacienteContext";
 import Antecedentes from "../../historia/components/Antecedentes";
-import {createAuditoria,detalle_data,} from "../../../services/auditoriaServices";
-
+import {createAuditoria,} from "../../../services/auditoriaServices";
+import { getCurrentUserId } from "../../../utils/userUtils";
 const steps = NewAtencionSteps;
 
 function StepContent({
@@ -329,12 +329,17 @@ export default function NuevaAtencionMedica() {
   const handleSave = async () => {
     const currentDate = new Date();
     try {
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
+      }
+
       const data = {
         id_historia: selectedPaciente,
-        id_personalsalud: "1",
+        id_personalsalud: loggedInUserId,
         problema_actual: formData.problemaActual || "",
         fecha_atencion: currentDate,
-        motivo_consulta: consultType, // 'control', 'externa', or 'registro'
+        motivo_consulta: consultType,
         revision_actual_sistema: JSON.stringify(formData.organs),
         examen_fisico: JSON.stringify(formData.regions),
         plan_tratamiento: formData.tratamiento || "",
@@ -342,14 +347,39 @@ export default function NuevaAtencionMedica() {
         diagnostico: JSON.stringify(formData.diagnostico),
         tipo_consulta: consultType,
       };
+
       const response = await createAtencion(data);
-      //creacion de auditoria
-      let data_auditoria = {};
-      data_auditoria.id_usuario = data.id_personalsalud;
-      data_auditoria.modulo = "Atencion";
-      data_auditoria.operacion = "Crear";
-      data_auditoria.detalle = detalle_data(data).insertSql;
-      await createAuditoria(data_auditoria);
+
+      // Audit for Atencion creation
+      const atencionAuditDescription = {
+        accion: "CREAR",
+        tabla: 'atenciones',
+        id_registro: response.data.id_aps,
+        datos_modificados: {
+          estado_anterior: null,
+          estado_nuevo: {
+            ...data,
+            diagnosticos: formData.diagnostico,
+            fecha_creacion: currentDate.toISOString()
+          },
+          detalles_creacion: {
+            tipo_operacion: "Nueva Atención Médica",
+            tipo_consulta: consultType,
+            paciente_id: selectedPaciente,
+            fecha_atencion: currentDate.toISOString()
+          }
+        },
+        fecha_modificacion: currentDate.toISOString()
+      };
+
+      await createAuditoria({
+        id_usuario: loggedInUserId,
+        modulo: "Atención Médica",
+        operacion: "Crear",
+        detalle: JSON.stringify(atencionAuditDescription),
+        fecha: currentDate.toISOString()
+      });
+
       const signosVitales = {
         id_historia: selectedPaciente,
         id_aps: response.data.id_aps,
@@ -363,28 +393,66 @@ export default function NuevaAtencionMedica() {
       };
 
       await createSignosVitales(signosVitales, selectedPaciente);
-      //creacion de auditoria
-      data_auditoria = {};
-      data_auditoria.id_usuario = data.id_personalsalud;
-      data_auditoria.modulo = "Signos Vitales";
-      data_auditoria.operacion = "Crear";
-      data_auditoria.detalle = detalle_data(data).insertSql;
-      await createAuditoria(data_auditoria);
-      // Update historia if it's not a control consultation
+
+      // Audit for Signos Vitales creation
+      const signosVitalesAuditDescription = {
+        accion: "CREAR",
+        tabla: 'signos_vitales',
+        id_registro: selectedPaciente,
+        datos_modificados: {
+          estado_anterior: null,
+          estado_nuevo: signosVitales,
+          detalles_creacion: {
+            tipo_operacion: "Registro de Signos Vitales",
+            atencion_id: response.data.id_aps,
+            paciente_id: selectedPaciente,
+            fecha_medicion: currentDate.toISOString()
+          }
+        },
+        fecha_modificacion: currentDate.toISOString()
+      };
+
+      await createAuditoria({
+        id_usuario: loggedInUserId,
+        modulo: "Signos Vitales",
+        operacion: "Crear",
+        detalle: JSON.stringify(signosVitalesAuditDescription),
+        fecha: currentDate.toISOString()
+      });
+
+      // Update historia if not a control consultation
       if (consultType !== "control") {
-        const historiaFormData = new FormData();
-        historiaFormData.append(
-          "motivo_consulta_historia",
-          formData.motivoConsulta
-        );
-        await updateHistoria(selectedPaciente, historiaFormData);
-        //creacion de auditoria
-        let data_auditoria = {};
-        data_auditoria.id_usuario = 0;
-        data_auditoria.modulo = "Historia";
-        data_auditoria.operacion = "Update";
-        data_auditoria.detalle = detalle_data(data_auditoria).updateSql;
-        await createAuditoria(data_auditoria);
+        const historiaUpdate = {
+          motivo_consulta_historia: formData.motivoConsulta
+        };
+
+        await updateHistoria(selectedPaciente, historiaUpdate);
+
+        // Audit for Historia update
+        const historiaAuditDescription = {
+          accion: "EDITAR",
+          tabla: 'historia',
+          id_registro: selectedPaciente,
+          datos_modificados: {
+            estado_anterior: { motivo_consulta_historia: motivoConsultaHistoria },
+            estado_nuevo: historiaUpdate,
+            detalles_cambios: {
+              tipo_operacion: "Actualización de Historia Clínica",
+              campo_modificado: "motivo_consulta_historia",
+              fecha_modificacion: currentDate.toISOString(),
+              atencion_id: response.data.id_aps
+            }
+          },
+          fecha_modificacion: currentDate.toISOString()
+        };
+
+        await createAuditoria({
+          id_usuario: loggedInUserId,
+          modulo: "Historia",
+          operacion: "Editar",
+          detalle: JSON.stringify(historiaAuditDescription),
+          fecha: currentDate.toISOString()
+        });
       }
 
       setSaveSuccess(true);

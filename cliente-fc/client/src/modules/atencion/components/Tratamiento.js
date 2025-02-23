@@ -9,6 +9,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import { getExamenByHistoria, createExamen, deleteExamen, updateExamen } from '../../../services/examenServices';
 import { usePacienteContext } from '../../../components/base/PacienteContext';
 import { API_IMAGE_URL } from "../../../services/apiConfig";
+import { createAuditoria } from '../../../services/auditoriaServices';
+import { getCurrentUserId } from "../../../utils/userUtils";
 
 const StyledModal = styled(Modal)(({ theme }) => ({
   display: 'flex',
@@ -103,6 +105,11 @@ const Tratamiento = ({ formData, setFormData }) => {
     }
 
     try {
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
+      }
+
       const formDataExamen = new FormData();
       formDataExamen.append('id_historia', selectedPaciente);
       formDataExamen.append('nombre_examen', newExamen.nombre_examen);
@@ -113,10 +120,61 @@ const Tratamiento = ({ formData, setFormData }) => {
         formDataExamen.append('archivo_examen', file);
       }
 
+      let response;
       if (editingExamen) {
-        await updateExamen(editingExamen.id_examen, formDataExamen);
+        response = await updateExamen(editingExamen.id_examen, formDataExamen);
+        
+        const auditDescription = {
+          accion: "EDITAR",
+          tabla: 'examenes',
+          id_registro: editingExamen.id_examen,
+          datos_modificados: {
+            estado_anterior: editingExamen,
+            estado_nuevo: { ...newExamen, archivo: file?.name },
+            detalles_cambios: {
+              tipo_operacion: "Actualización de Examen",
+              campos_modificados: Object.keys(newExamen).filter(key => 
+                newExamen[key] !== editingExamen[key]
+              ),
+              fecha_modificacion: new Date().toISOString()
+            }
+          },
+          fecha_modificacion: new Date().toISOString()
+        };
+
+        await createAuditoria({
+          id_usuario: loggedInUserId,
+          modulo: "Examenes",
+          operacion: "Editar1",
+          detalle: JSON.stringify(auditDescription),
+          fecha: new Date().toISOString()
+        });
       } else {
-        await createExamen(formDataExamen);
+        response = await createExamen(formDataExamen);
+        
+        const auditDescription = {
+          accion: "CREAR",
+          tabla: 'examenes',
+          id_registro: response.id_examen,
+          datos_modificados: {
+            estado_anterior: null,
+            estado_nuevo: { ...newExamen, archivo: file?.name },
+            detalles_creacion: {
+              tipo_operacion: "Nuevo Examen",
+              paciente_id: selectedPaciente,
+              fecha_creacion: new Date().toISOString()
+            }
+          },
+          fecha_modificacion: new Date().toISOString()
+        };
+
+        await createAuditoria({
+          id_usuario: loggedInUserId,
+          modulo: "Examenes",
+          operacion: "Crear",
+          detalle: JSON.stringify(auditDescription),
+          fecha: new Date().toISOString()
+        });
       }
       
       fetchExamenes();
@@ -140,7 +198,38 @@ const Tratamiento = ({ formData, setFormData }) => {
 
   const handleDeleteExamen = async (id) => {
     try {
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
+      }
+
+      const examenToDelete = examenes.find(e => e.id_examen === id);
       await deleteExamen(id);
+
+      const auditDescription = {
+        accion: "ELIMINAR",
+        tabla: 'examenes',
+        id_registro: id,
+        datos_modificados: {
+          estado_anterior: examenToDelete,
+          estado_nuevo: null,
+          detalles_eliminacion: {
+            tipo_operacion: "Eliminación de Examen",
+            paciente_id: selectedPaciente,
+            fecha_eliminacion: new Date().toISOString()
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
+      };
+
+      await createAuditoria({
+        id_usuario: loggedInUserId,
+        modulo: "Examenes",
+        operacion: "Eliminar",
+        detalle: JSON.stringify(auditDescription),
+        fecha: new Date().toISOString()
+      });
+
       fetchExamenes();
     } catch (error) {
       console.error('Error deleting examen:', error);
@@ -170,7 +259,39 @@ const Tratamiento = ({ formData, setFormData }) => {
 
   const handleUpdateExamenStatus = async (id, newStatus) => {
     try {
+      const loggedInUserId = getCurrentUserId();
+      if (!loggedInUserId) {
+        throw new Error('No user logged in');
+      }
+      const examenToUpdate = examenes.find(e => e.id_examen === id);
       await updateExamen(id, { estado_examen: newStatus });
+
+      const auditDescription = {
+        accion: "EDITAR",
+        tabla: 'examenes',
+        id_registro: id,
+        datos_modificados: {
+          estado_anterior: { estado_examen: examenToUpdate.estado_examen },
+          estado_nuevo: { estado_examen: newStatus },
+          detalles_cambios: {
+            tipo_operacion: "Actualización de Estado de Examen",
+            campo_modificado: "estado_examen",
+            valor_anterior: examenToUpdate.estado_examen,
+            valor_nuevo: newStatus,
+            fecha_modificacion: new Date().toISOString()
+          }
+        },
+        fecha_modificacion: new Date().toISOString()
+      };
+
+      await createAuditoria({
+        id_usuario: loggedInUserId,
+        modulo: "Examenes",
+        operacion: "Editar2",
+        detalle: JSON.stringify(auditDescription),
+        fecha: new Date().toISOString()
+      });
+
       fetchExamenes();
     } catch (error) {
       console.error('Error updating examen status:', error);

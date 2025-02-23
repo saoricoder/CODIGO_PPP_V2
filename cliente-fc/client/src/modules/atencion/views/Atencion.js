@@ -27,7 +27,7 @@ import {
   createAuditoria,
   detalle_data,
 } from "../../../services/auditoriaServices";
-
+import { getCurrentUserId } from "../../../utils/userUtils";
 const Atencion = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { selectedPaciente } = usePacienteContext();
@@ -54,13 +54,42 @@ const Atencion = () => {
         const pacienteData = await getPaciente(selectedPaciente);
         if (pacienteData && pacienteData.id_paciente) {
           const atencionesData = await getAtenciones(selectedPaciente);
-          //creacion de auditoria
-          let data_auditoria = {};
-          data_auditoria.id_usuario = pacienteData.id_paciente;
-          data_auditoria.modulo = "Atencion";
-          data_auditoria.operacion = "Consultar";
-          data_auditoria.detalle = detalle_data(data_auditoria).selectTodoSql;
-          createAuditoria(data_auditoria);
+          
+          const loggedInUserId = getCurrentUserId();
+          if (!loggedInUserId) {
+            throw new Error('No user logged in');
+          }
+
+          const detailedDescription = {
+            accion: "CONSULTAR",
+            tabla: 'atenciones',
+            id_registro: pacienteData.id_paciente,
+            datos_modificados: {
+              estado_anterior: null,
+              estado_nuevo: null,
+              detalles_consulta: {
+                paciente: {
+                  id: pacienteData.id_paciente,
+                  nombre: `${pacienteData.nombres_paciente} ${pacienteData.apellidos_paciente}`,
+                  dni: pacienteData.dni_paciente
+                },
+                tipo_consulta: "Historial de Atenciones",
+                fecha_consulta: new Date().toISOString()
+              }
+            },
+            fecha_modificacion: new Date().toISOString()
+          };
+
+          const auditData = {
+            id_usuario: loggedInUserId,
+            modulo: "Atencion",
+            operacion: "CONSULTAR1",
+            detalle: JSON.stringify(detailedDescription),
+            fecha: new Date().toISOString()
+          };
+
+          await createAuditoria(auditData);
+
           if (atencionesData.length === 0) {
             setIsFirstAttention(true);
           } else {
