@@ -18,7 +18,7 @@ export function generarPDF(data, title) {
 
   // Definir las columnas de la tabla actualizadas
   const columns = [
-    { header: "ID", dataKey: "id" },
+    //{ header: "ID", dataKey: "id" },
     { header: "Fecha", dataKey: "fecha" },
     { header: "Operación", dataKey: "operacion" },
     { header: "Usuario", dataKey: "usuario" },
@@ -29,33 +29,42 @@ export function generarPDF(data, title) {
   const rows = data.map((item) => {
     let formattedDate;
     try {
+      console.log('Processing date:', item.fecha);
+      
       if (!item.fecha) {
-        formattedDate = 'Fecha no disponible';
+        console.log('No date provided');
+        formattedDate = 'Sin fecha';
       } else {
-        const rawDate = item.fecha.replace('T', ' ').split('.')[0];
-        const date = new Date(rawDate);
+        // Parse the incoming date string
+        const [datePart, timePart] = item.fecha.split(',');
+        const [day, month, year] = datePart.split('/');
+        const dateString = `${year}-${month}-${day}${timePart || ' 00:00:00'}`;
+        
+        const date = new Date(dateString);
+        console.log('Parsed date:', date);
         
         if (isNaN(date.getTime())) {
-          formattedDate = 'Fecha no disponible';
+          console.log('Invalid date format');
+          formattedDate = 'Sin fecha';
         } else {
-          formattedDate = date.toLocaleString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
+          formattedDate = date.toLocaleString('es-EC', {
+            timeZone: 'America/Guayaquil',
             year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit',
             hour12: false
-          });
+          }).replace(/\s+/g, ' ');
         }
       }
     } catch (error) {
-      console.error('Error al formatear fecha:', item.fecha);
-      formattedDate = 'Fecha no disponible';
+      console.error('Date processing error:', error, 'Input:', item.fecha);
+      formattedDate = 'Sin fecha';
     }
-
+    
     return {
-      id: item.id,
       fecha: formattedDate,
       operacion: item.operacion,
       usuario: item.usuario,
