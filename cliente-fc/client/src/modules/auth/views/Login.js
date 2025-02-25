@@ -60,12 +60,20 @@ const Login = () => {
     };
     try {
       const response = await login(user);
-      console.log('Login response:', response); // Log the response for debugging
+      console.log('Login response:', response);
       if (response.success) {
-        const loginTime = new Date().toISOString(); // Get current time
+        const loginTime = new Date();
+        const ecuadorTime = new Intl.DateTimeFormat('es-EC', {
+          timeZone: 'America/Guayaquil',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        }).format(loginTime);
+
         localStorage.setItem("token", response.token);
-        localStorage.setItem("user", JSON.stringify(response.data)); // Store user data
-        localStorage.setItem("loginTime", loginTime); // Store login time
+        localStorage.setItem("user", JSON.stringify(response.data));
+        localStorage.setItem("loginTime", loginTime);
         setAlertMessage("Inicio de sesión exitoso");
         setAlertSeverity("success");
         setOpenAlert(true);
@@ -76,7 +84,7 @@ const Login = () => {
             id_usuario: response.data.id_usuario,
             modulo: "Login",
             operacion: "Iniciar Sesión",
-            detalle: `Usuario ${response.data.id_usuario} inició sesión a las ${loginTime}`
+            detalle: `Usuario ${response.data.id_usuario} inició sesión a las ${ecuadorTime}`
           };
           await createAuditoria(data_auditoria);
           console.log('Auditoría de inicio de sesión creada con éxito');

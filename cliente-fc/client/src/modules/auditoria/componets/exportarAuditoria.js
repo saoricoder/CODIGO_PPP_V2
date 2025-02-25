@@ -42,66 +42,90 @@ const ExportarAuditorias = () => {
     fetchAuditorias();
   }, []);
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Fecha no disponible';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Fecha no disponible';
+    
+      const options = {
+        timeZone: 'America/Guayaquil',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      };
+    
+      return date.toLocaleString('es-EC', options);
+    } catch (error) {
+      console.error('Error al formatear fecha:', error, 'dateString:', dateString);
+      return 'Fecha no disponible';
+    }
+  };
+
+  const handleClearFilters = () => {
+    setStartDate("");
+    setEndDate("");
+  };
+
   const handleExport = () => {
     const filteredAuditorias = auditorias.filter((auditoria) => {
-      const fechaAuditoria = new Date(auditoria.fecha);
-      const start = startDate ? new Date(startDate + 'T00:00:00') : null;
-      const end = endDate ? new Date(endDate + 'T23:59:59') : null;
+      if (!auditoria.fecha) return false;
+      
+      try {
+        // Create a date object in Ecuador timezone
+        const auditoriaDate = new Date(auditoria.fecha);
+        const auditoriaDateStr = auditoriaDate.toISOString().split('T')[0];
 
-      if (start && end) {
-        return fechaAuditoria >= start && fechaAuditoria <= end;
-      } else if (start) {
-        return fechaAuditoria >= start;
-      } else if (end) {
-        return fechaAuditoria <= end;
+        // Compare only the date part (YYYY-MM-DD)
+        if (startDate && endDate) {
+          return auditoriaDateStr >= startDate && auditoriaDateStr <= endDate;
+        } else if (startDate) {
+          return auditoriaDateStr >= startDate;
+        } else if (endDate) {
+          return auditoriaDateStr <= endDate;
+        }
+        return true;
+      } catch (error) {
+        console.error('Error processing date:', error);
+        return false;
       }
-      return true;
     });
 
-    console.log('Sample fecha:', filteredAuditorias[0]?.fecha);
-        const dataForPDF = filteredAuditorias.map((auditoria) => ({
+    if (filteredAuditorias.length === 0) {
+      alert('No hay auditorías disponibles para las fechas seleccionadas');
+      return;
+    }
+
+    const dataForPDF = filteredAuditorias.map((auditoria) => ({
       id: auditoria.id_auditoria,
       fecha: formatDate(auditoria.fecha),
-      modulo: auditoria.modulo,
-      usuario: auditoria.usuario,
-      operacion: auditoria.operacion,
-      detalle: auditoria.detalle,
+      modulo: auditoria.modulo || 'No especificado',
+      usuario: auditoria.id_usuario || 'No especificado',
+      operacion: auditoria.operacion || 'No especificada',
+      detalle: auditoria.detalle || 'Sin detalles'
     }));
 
-    generarPDF(dataForPDF, "Reporte de Auditorías");
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return "Fecha inválida";
-    }
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const title = `Reporte de Auditorías ${startDate ? `desde ${startDate}` : ''} ${endDate ? `hasta ${endDate}` : ''}`;
+    generarPDF(dataForPDF, title);
   };
   const handleGoBack = () => navigate("/fcc-auditoria");
-
   const handleDrawerToggle = () => setDrawerOpen(!drawerOpen);
 
   return (
     <Box sx={{ display: "flex" }}>
       <Tooltip title="Menú de navegación principal">
         <span>
-          {" "}
-          {/* Contenedor para asegurar que el Tooltip pueda manejar ref correctamente */}
           <NavbarAdmin onDrawerToggle={handleDrawerToggle} />
         </span>
       </Tooltip>
 
       <Tooltip title="Menú lateral con opciones adicionales">
         <span>
-          {" "}
-          {/* Agregando contenedor también aquí */}
           <Drawer open={drawerOpen} onClose={handleDrawerToggle} />
         </span>
       </Tooltip>
@@ -157,7 +181,7 @@ const ExportarAuditorias = () => {
                     size="small"
                   />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} md={2}>
                   <Button
                     fullWidth
                     variant="contained"
@@ -173,11 +197,27 @@ const ExportarAuditorias = () => {
                     {loading ? (
                       <CircularProgress size={24} sx={{ color: "white" }} />
                     ) : (
-                      "Exportar Auditorías"
+                      "Exportar"
                     )}
                   </Button>
                 </Grid>
+                <Grid item xs={12} md={2}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    color="secondary"
+                    onClick={handleClearFilters}
+                    sx={{
+                      height: "40px",
+                      textTransform: "none",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    Limpiar
+                  </Button>
+                </Grid>
               </Grid>
+
               <Typography
                 variant="body2"
                 sx={{

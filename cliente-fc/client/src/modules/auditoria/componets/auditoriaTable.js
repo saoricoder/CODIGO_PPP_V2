@@ -59,18 +59,21 @@ const AuditoriasTable = ({ auditorias, loading }) => {
         const date = new Date(dateString);
         if (isNaN(date.getTime())) return 'Fecha no disponible';
       
-        const options = {
+        const ecuadorDate = new Intl.DateTimeFormat('es-EC', {
           timeZone: 'America/Guayaquil',
           year: 'numeric',
-          month: '2-digit',
+          month: 'long',
           day: '2-digit',
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
-          hour12: false
-        };
+          hour12: false,
+          weekday: 'long'
+        }).format(date);
       
-      return date.toLocaleString('es-EC', options);
+        return ecuadorDate
+          .replace(/,/g, '')
+          .replace(/\b(\d)\b/g, '0$1');
     } catch (error) {
       console.error('Error al formatear fecha:', error, 'dateString:', dateString);
       return 'Fecha no disponible';

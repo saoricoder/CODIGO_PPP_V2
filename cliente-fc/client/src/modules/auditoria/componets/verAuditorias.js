@@ -12,8 +12,7 @@ import {
   Tooltip,
   IconButton,
   InputAdornment,
-
-  Container,
+  Container,Snackbar,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchIcon from "@mui/icons-material/Search";
@@ -58,103 +57,60 @@ const VerAuditorias = () => {
   const handleApplyFilters = () => {
     const filtered = auditorias.filter((auditoria) => {
       let dateMatch = true;
+      let userMatch = true;
+
       if (filterDate && auditoria.fecha) {
         try {
-          // Parse the date with explicit timezone
-          const auditoriaDate = new Date(auditoria.fecha + ' UTC-05:00');
-          const filterDateObj = new Date(filterDate + 'T00:00:00-05:00');
-          
-          // Format dates for comparison using Ecuador timezone
-          const auditoriaDateStr = auditoriaDate.toLocaleDateString('es-EC', {
-            timeZone: 'America/Guayaquil',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          });
+          const auditoriaDate = new Date(auditoria.fecha);
+          const filterDateObj = new Date(filterDate + "T00:00:00");
 
-          const filterDateStr = filterDateObj.toLocaleDateString('es-EC', {
-            timeZone: 'America/Guayaquil',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          });
-
-          dateMatch = auditoriaDateStr === filterDateStr;
+          dateMatch =
+            auditoriaDate.toISOString().split("T")[0] ===
+            filterDateObj.toISOString().split("T")[0];
         } catch (error) {
-          console.error('Error processing date:', error);
+          console.error("Error procesando la fecha:", error);
           dateMatch = false;
         }
       }
-      
-      const userMatch = !filterUser || 
-        (auditoria.id_usuario && 
-         auditoria.id_usuario.toString().toLowerCase().includes(filterUser.toLowerCase()));
-      
+
+      // Improved user filter
+      if (filterUser.trim()) {
+        const searchTerm = filterUser.trim().toLowerCase();
+        userMatch = auditoria.id_usuario && (
+          auditoria.id_usuario.toString().toLowerCase().includes(searchTerm)
+        );
+      }
+
       return dateMatch && userMatch;
     });
+
     setFilteredAuditorias(filtered);
+
+    // Show message for no results
+    if (filtered.length === 0) {
+      let message = "No se encontraron auditorías";
+      if (filterUser && filterDate) {
+        message += ` para el usuario "${filterUser}" en la fecha seleccionada`;
+      } else if (filterUser) {
+        message += ` para el usuario "${filterUser}"`;
+      } else if (filterDate) {
+        const formattedDate = new Date(filterDate).toLocaleDateString('es-EC', {
+          year: 'numeric',
+          month: 'long',
+          day: '2-digit'
+        });
+        message += ` para la fecha: ${formattedDate}`;
+      }
+      setAlertMessage(message);
+      setOpenAlert(true);
+    }
   };
-  // Update in the Grid container
-  <Grid container spacing={2} alignItems="center">
-    <Grid item xs={12} md={3}>
-      <Card sx={{ p: 2 }}>
-        <TextField
-          fullWidth
-          label="Fecha"
-          type="date"
-          size="small"
-          InputLabelProps={{ shrink: true }}
-          value={filterDate}
-          onChange={(e) => setFilterDate(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color="action" />
-              </InputAdornment>
-            ),
-          }}
-        />
-      </Card>
-    </Grid>
-    <Grid item xs={12} md={3}>
-      <TextField
-        fullWidth
-        label="Usuario"
-        size="small"
-        value={filterUser}
-        onChange={(e) => setFilterUser(e.target.value)}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon color="action" />
-            </InputAdornment>
-          ),
-        }}
-      />
-    </Grid>
-    <Grid item xs={12} md={6}>
-      <Button
-        fullWidth
-        variant="contained"
-        color="primary"
-        onClick={handleApplyFilters}
-        sx={{ height: 45, fontWeight: "bold" }}
-      >
-        Aplicar Filtros
-      </Button>
-    </Grid>
-    <Grid item xs={12} md={6}>
-      <Button
-        fullWidth
-        variant="outlined"
-        color="secondary"
-        onClick={handleClearFilters}
-        sx={{ height: 45 }}
-      >
-        Limpiar Filtros
-      </Button>
-    </Grid>
-  </Grid>
+
+  // Add state for alert
+  const [alertMessage, setAlertMessage] = useState("");
+  const [openAlert, setOpenAlert] = useState(false);
+
+  // Add Snackbar component at the end of the return statement, just before the closing Container tag
   const handleDrawerToggle = () => setDrawerOpen(!drawerOpen);
   const handleGoBack = () => navigate("/fcc-auditoria");
 
@@ -162,16 +118,12 @@ const VerAuditorias = () => {
     <Box sx={{ display: "flex" }}>
       <Tooltip title="Menú de navegación principal">
         <span>
-          {" "}
-          {/* Contenedor para asegurar que el Tooltip pueda manejar ref correctamente */}
           <NavbarAdmin onDrawerToggle={handleDrawerToggle} />
         </span>
       </Tooltip>
 
       <Tooltip title="Menú lateral con opciones adicionales">
         <span>
-          {" "}
-          {/* Agregando contenedor también aquí */}
           <Drawer open={drawerOpen} onClose={handleDrawerToggle} />
         </span>
       </Tooltip>
@@ -272,16 +224,18 @@ const VerAuditorias = () => {
           <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
             <CardHeader
               title="Registros de Auditoría"
-              subheader={`${auditorias.length} resultados encontrados`}
+              subheader={`${filteredAuditorias.length > 0 ? filteredAuditorias.length : auditorias.length} resultados encontrados`}
             />
             <CardContent>
               {loading ? (
                 <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
                   <CircularProgress size={50} color="primary" />
                 </Box>
-              ) : (filteredAuditorias.length > 0 || auditorias.length > 0) ? (
+              ) : filteredAuditorias.length > 0 || auditorias.length > 0 ? (
                 <AuditoriasTable
-                  auditorias={filteredAuditorias.length > 0 ? filteredAuditorias : auditorias}
+                  auditorias={
+                    filteredAuditorias.length > 0 ? filteredAuditorias : auditorias
+                  }
                   onEditAuditoria={(id) => navigate(`/editar-auditoria/${id}`)}
                 />
               ) : (
@@ -293,6 +247,13 @@ const VerAuditorias = () => {
               )}
             </CardContent>
           </Card>
+          <Snackbar
+            open={openAlert}
+            autoHideDuration={4000}
+            onClose={() => setOpenAlert(false)}
+            message={alertMessage}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          />
         </Container>
       </Box>
     </Box>

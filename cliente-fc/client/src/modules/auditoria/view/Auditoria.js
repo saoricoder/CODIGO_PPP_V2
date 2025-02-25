@@ -41,10 +41,14 @@ const Auditoria = () => {
   }, []);
 
   const metrics = useMemo(() => {
-    const safeAuditorias = auditorias || []; // Asegura que sea un array
+    const safeAuditorias = auditorias || [];
+    // Sort auditorias by date in descending order to get the most recent first
+    const sortedAuditorias = [...safeAuditorias].sort((a, b) => 
+      new Date(b.fecha) - new Date(a.fecha)
+    );
     return {
       total: safeAuditorias.length,
-      recientes: safeAuditorias.slice(0, 5),
+      recientes: sortedAuditorias.slice(0, 5),
     };
   }, [auditorias]);
 
@@ -133,9 +137,27 @@ const Auditoria = () => {
                         Última Actividad:{" "}
                         <strong>
                           {metrics.recientes.length > 0
-                            ? new Date(
-                                metrics.recientes[0].fecha
-                              ).toLocaleString()
+                            ? (() => {
+                                try {
+                                  const date = new Date(metrics.recientes[0].fecha);
+                                  if (isNaN(date.getTime())) {
+                                    return "Fecha no válida";
+                                  }
+                                  return date.toLocaleString('es-EC', {
+                                    timeZone: 'America/Guayaquil',
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    hour12: false
+                                  });
+                                } catch (error) {
+                                  console.error('Error formatting date:', error);
+                                  return "Error en formato de fecha";
+                                }
+                              })()
                             : "Sin registros recientes"}
                         </strong>
                       </Typography>
